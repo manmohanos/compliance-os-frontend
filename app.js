@@ -10,6 +10,38 @@ const CONFIG = {
     API_BASE: 'https://giftcity-compliance-api.onrender.com',
 };
 
+// ── Cold Start Handler ──────────────────────────────────
+let coldStartTimer = null;
+function showColdStartBanner() {
+    let banner = document.getElementById('coldStartBanner');
+    if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'coldStartBanner';
+        banner.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#00D4AA;color:#0F172A;padding:10px 20px;border-radius:20px;font-weight:600;font-size:14px;z-index:9999;box-shadow:0 4px 12px rgba(0,212,170,0.3);';
+        banner.textContent = 'Waking up server... (~10s first load)';
+        document.body.appendChild(banner);
+    }
+    banner.style.display = 'block';
+}
+
+function hideColdStartBanner() {
+    clearTimeout(coldStartTimer);
+    const banner = document.getElementById('coldStartBanner');
+    if (banner) banner.style.display = 'none';
+}
+
+const originalFetch = window.fetch;
+window.fetch = async function(...args) {
+    if (typeof args[0] === 'string' && args[0].includes(CONFIG.API_BASE)) {
+        coldStartTimer = setTimeout(showColdStartBanner, 3000);
+    }
+    try {
+        return await originalFetch.apply(this, args);
+    } finally {
+        hideColdStartBanner();
+    }
+};
+
 // ── State ────────────────────────────────────────────────
 let state = {
     circulars: [],
