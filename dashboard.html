@@ -37,8 +37,8 @@
                 document.cookie = key + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
             }
         };
-
-        const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey, {
+        const { createClient } = supabase;
+        const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
             auth: {
                 storage: cookieStorage,
                 autoRefreshToken: true,
