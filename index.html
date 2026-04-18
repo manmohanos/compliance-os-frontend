@@ -1,0 +1,1756 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compliance OS — Regulatory Intelligence for GIFT City</title>
+    <meta name="description"
+        content="Compliance OS monitors 375+ IFSCA circulars daily and tells your compliance team exactly what changed, what to do, and when — before the deadline hits.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        /* ============================================================
+           COMPLIANCE OS — Landing Page
+           Design: Dark editorial, financial terminal aesthetic
+           ============================================================ */
+
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-base: #080C14;
+            --bg-raised: #0D1219;
+            --bg-surface: #111827;
+            --bg-surface-hover: #151D2E;
+            --border: #1A2332;
+            --border-light: #243044;
+            --teal: #00D4AA;
+            --teal-dim: rgba(0, 212, 170, 0.08);
+            --teal-glow: rgba(0, 212, 170, 0.15);
+            --red: #EF4444;
+            --amber: #F59E0B;
+            --blue: #60A5FA;
+            --text-primary: #F1F5F9;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            --font-heading: 'Space Grotesk', -apple-system, sans-serif;
+            --font-body: 'Inter', -apple-system, sans-serif;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-base);
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* ── Reveal Animations ──────────────────────────────── */
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(24px);
+            transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .reveal-delay-1 {
+            transition-delay: 0.1s;
+        }
+
+        .reveal-delay-2 {
+            transition-delay: 0.2s;
+        }
+
+        .reveal-delay-3 {
+            transition-delay: 0.3s;
+        }
+
+        .reveal-delay-4 {
+            transition-delay: 0.4s;
+        }
+
+        /* ── Layout ─────────────────────────────────────────── */
+
+        .container {
+            max-width: 1140px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        section {
+            padding: 100px 0;
+        }
+
+        /* ── Navbar ─────────────────────────────────────────── */
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 0 24px;
+            background: rgba(8, 12, 20, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .navbar-inner {
+            max-width: 1140px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-logo svg {
+            flex-shrink: 0;
+        }
+
+        .nav-logo-text {
+            font-family: var(--font-heading);
+            font-weight: 700;
+            font-size: 17px;
+            letter-spacing: -0.3px;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+
+        .nav-links a {
+            font-size: 13.5px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .nav-cta {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--bg-base) !important;
+            background: var(--teal);
+            padding: 8px 18px;
+            border-radius: 6px;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+
+        .nav-cta:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .nav-hamburger {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        /* ── Hero ───────────────────────────────────────────── */
+
+        .hero {
+            padding: 160px 0 100px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-orb {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 212, 170, 0.06) 0%, transparent 70%);
+            top: -100px;
+            right: -200px;
+            animation: orb-drift 20s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes orb-drift {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            33% {
+                transform: translate(-40px, 30px) scale(1.05);
+            }
+
+            66% {
+                transform: translate(20px, -20px) scale(0.97);
+            }
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12.5px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: var(--teal);
+            margin-bottom: 20px;
+        }
+
+        .hero-eyebrow::before {
+            content: '';
+            width: 20px;
+            height: 1px;
+            background: var(--teal);
+        }
+
+        .hero h1 {
+            font-family: var(--font-heading);
+            font-size: 52px;
+            font-weight: 700;
+            line-height: 1.08;
+            letter-spacing: -1.5px;
+            margin-bottom: 20px;
+        }
+
+        .hero-sub {
+            font-size: 17px;
+            line-height: 1.65;
+            color: var(--text-secondary);
+            max-width: 480px;
+            margin-bottom: 36px;
+        }
+
+        .hero-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: var(--font-body);
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--bg-base);
+            background: var(--teal);
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.15s;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-ghost {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--font-body);
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            padding: 12px 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            cursor: pointer;
+            transition: color 0.2s, border-color 0.2s;
+        }
+
+        .btn-ghost:hover {
+            color: var(--text-primary);
+            border-color: var(--border-light);
+        }
+
+        /* Hero Dashboard Mockup */
+
+        .hero-mockup {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow:
+                0 0 0 1px rgba(0, 212, 170, 0.03),
+                0 20px 60px -12px rgba(0, 0, 0, 0.5),
+                0 0 120px -40px rgba(0, 212, 170, 0.08);
+        }
+
+        .mockup-bar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--bg-raised);
+        }
+
+        .mockup-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border-light);
+        }
+
+        .mockup-bar-title {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-left: 8px;
+        }
+
+        .mockup-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px 12px;
+        }
+
+        .mockup-h {
+            font-family: var(--font-heading);
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .mockup-stats {
+            display: flex;
+            gap: 16px;
+        }
+
+        .mockup-stat {
+            text-align: center;
+        }
+
+        .mockup-stat-val {
+            font-family: var(--font-heading);
+            font-size: 16px;
+            font-weight: 700;
+        }
+
+        .mockup-stat-label {
+            font-size: 9px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .mockup-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .mockup-table th {
+            text-align: left;
+            padding: 8px 16px;
+            font-size: 9.5px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border);
+            background: rgba(0, 0, 0, 0.15);
+        }
+
+        .mockup-table td {
+            padding: 12px 16px;
+            font-size: 12.5px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .mockup-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 9.5px;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
+        }
+
+        .badge-critical {
+            background: rgba(239, 68, 68, 0.12);
+            color: var(--red);
+        }
+
+        .badge-moderate {
+            background: rgba(245, 158, 11, 0.12);
+            color: var(--amber);
+        }
+
+        .badge-advisory {
+            background: rgba(96, 165, 250, 0.12);
+            color: var(--blue);
+        }
+
+        .mockup-title-text {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .mockup-date {
+            color: var(--text-muted);
+            font-size: 11.5px;
+            white-space: nowrap;
+        }
+
+        .mockup-view {
+            font-size: 11px;
+            color: var(--teal);
+            font-weight: 500;
+            cursor: default;
+        }
+
+        /* ── Trust Bar ──────────────────────────────────────── */
+
+        .trust-bar {
+            padding: 32px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .trust-items {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 40px;
+            flex-wrap: wrap;
+        }
+
+        .trust-item {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            letter-spacing: 0.2px;
+        }
+
+        .trust-item strong {
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .trust-divider {
+            width: 1px;
+            height: 16px;
+            background: var(--border-light);
+        }
+
+        /* ── Problem Section ────────────────────────────────── */
+
+        .problem {
+            background: var(--bg-base);
+        }
+
+        .section-label {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--teal);
+            margin-bottom: 14px;
+        }
+
+        .section-heading {
+            font-family: var(--font-heading);
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: -0.8px;
+            margin-bottom: 56px;
+        }
+
+        .problem-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .problem-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 32px 28px;
+            transition: border-color 0.3s, transform 0.3s;
+        }
+
+        .problem-card:hover {
+            border-color: var(--border-light);
+            transform: translateY(-2px);
+        }
+
+        .problem-card h3 {
+            font-family: var(--font-heading);
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            line-height: 1.3;
+            letter-spacing: -0.2px;
+        }
+
+        .problem-card p {
+            font-size: 14px;
+            line-height: 1.65;
+            color: var(--text-secondary);
+        }
+
+        /* ── Features Section ───────────────────────────────── */
+
+        .features {
+            background: var(--bg-raised);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto auto;
+            gap: 20px;
+        }
+
+        .feature-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 36px 32px;
+            transition: border-color 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--border-light);
+        }
+
+        .feature-card.feature-large {
+            grid-row: 1 / 3;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .feature-number {
+            font-family: var(--font-heading);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--teal);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 16px;
+        }
+
+        .feature-card h3 {
+            font-family: var(--font-heading);
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.4px;
+            margin-bottom: 14px;
+            line-height: 1.25;
+        }
+
+        .feature-large h3 {
+            font-size: 28px;
+        }
+
+        .feature-card p {
+            font-size: 14.5px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+        }
+
+        .feature-large p {
+            font-size: 15.5px;
+            max-width: 400px;
+        }
+
+        /* ── How It Works ───────────────────────────────────── */
+
+        .how {
+            background: var(--bg-base);
+        }
+
+        .how .section-heading {
+            text-align: center;
+        }
+
+        .how .section-label {
+            text-align: center;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0;
+            position: relative;
+        }
+
+        .steps::before {
+            content: '';
+            position: absolute;
+            top: 28px;
+            left: calc(12.5% + 14px);
+            right: calc(12.5% + 14px);
+            height: 1px;
+            background: var(--border-light);
+        }
+
+        .step {
+            text-align: center;
+            position: relative;
+            padding: 0 16px;
+        }
+
+        .step-num {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: 1px solid var(--border-light);
+            background: var(--bg-surface);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-heading);
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--teal);
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step p {
+            font-size: 14px;
+            line-height: 1.55;
+            color: var(--text-secondary);
+            max-width: 200px;
+            margin: 0 auto;
+        }
+
+        /* ── Stats Section ──────────────────────────────────── */
+
+        .stats-section {
+            background: var(--bg-raised);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            padding: 80px 0;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 32px;
+        }
+
+        .stat-block {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-family: var(--font-heading);
+            font-size: 56px;
+            font-weight: 700;
+            letter-spacing: -2px;
+            color: var(--teal);
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .stat-desc {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            letter-spacing: 0.3px;
+        }
+
+        /* ── Early Access Form ──────────────────────────────── */
+
+        .cta-section {
+            background: var(--bg-base);
+        }
+
+        .cta-inner {
+            max-width: 540px;
+            margin: 0 auto;
+        }
+
+        .cta-inner .section-heading {
+            text-align: center;
+        }
+
+        .cta-sub {
+            text-align: center;
+            font-size: 15px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            margin-top: -40px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            letter-spacing: 0.2px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 11px 14px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+            -webkit-appearance: none;
+        }
+
+        .form-group input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: var(--teal);
+        }
+
+        .form-group select {
+            background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2364748B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            padding-right: 36px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .form-submit {
+            width: 100%;
+            margin-top: 8px;
+        }
+
+        .form-note {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 14px;
+        }
+
+        /* ── Footer ─────────────────────────────────────────── */
+
+        .footer {
+            padding: 48px 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .footer-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .footer-logo-text {
+            font-family: var(--font-heading);
+            font-weight: 700;
+            font-size: 15px;
+        }
+
+        .footer-tagline {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .footer-links {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .footer-links a {
+            font-size: 13px;
+            color: var(--text-muted);
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: var(--text-secondary);
+        }
+
+        .footer-copy {
+            width: 100%;
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* ── Ticker ─────────────────────────────────────────── */
+        .hero-ticker {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            padding: 6px 16px;
+            border-radius: 100px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 24px;
+            letter-spacing: 0.2px;
+        }
+
+        .ticker-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--red);
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .ticker-dot::after {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: -4px;
+            right: -4px;
+            bottom: -4px;
+            border-radius: 50%;
+            border: 2px solid var(--red);
+            opacity: 0;
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        .ticker-highlight {
+            color: var(--red);
+        }
+
+        .ticker-muted {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(0.5);
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                transform: scale(1.5);
+                opacity: 0;
+            }
+        }
+
+        /* ── Social Proof ───────────────────────────────────── */
+        .testimonial {
+            background: var(--bg-base);
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+            padding: 80px 0;
+        }
+
+        .testimonial-inner {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .testimonial blockquote {
+            font-family: var(--font-heading);
+            font-size: 28px;
+            line-height: 1.4;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 24px;
+            position: relative;
+            letter-spacing: -0.5px;
+        }
+
+        .testimonial blockquote::before {
+            content: '\201C';
+            display: block;
+            font-size: 64px;
+            color: var(--teal);
+            line-height: 1;
+            margin-bottom: -10px;
+            opacity: 0.5;
+        }
+
+        .testimonial cite {
+            display: block;
+            font-style: normal;
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* ── Pricing ────────────────────────────────────────── */
+        .pricing {
+            background: var(--bg-base);
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-top: 48px;
+            align-items: start;
+        }
+
+        .pricing-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 40px 32px;
+            position: relative;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+
+        .pricing-card:hover {
+            border-color: var(--border-light);
+            transform: translateY(-4px);
+        }
+
+        .pricing-card.popular {
+            border-color: var(--teal);
+            box-shadow: 0 0 40px rgba(0, 212, 170, 0.08);
+            background: linear-gradient(180deg, rgba(17, 24, 39, 1) 0%, rgba(13, 18, 25, 1) 100%);
+        }
+
+        .pricing-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--teal);
+            color: var(--bg-base);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 100px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .pricing-tier {
+            font-family: var(--font-heading);
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .pricing-price {
+            font-family: var(--font-heading);
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -1px;
+        }
+
+        .pricing-price span {
+            font-size: 15px;
+            color: var(--text-muted);
+            font-weight: 500;
+            letter-spacing: 0;
+        }
+
+        .pricing-features {
+            list-style: none;
+            margin: 32px 0;
+        }
+
+        .pricing-features li {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .pricing-features li svg {
+            flex-shrink: 0;
+            color: var(--teal);
+            margin-top: 2px;
+        }
+
+        .pricing-btn {
+            display: block;
+            width: 100%;
+            text-align: center;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+
+        .pricing-btn-primary {
+            background: var(--teal);
+            color: var(--bg-base);
+        }
+
+        .pricing-btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--border-light);
+        }
+
+        .pricing-btn-primary:hover,
+        .pricing-btn-secondary:hover {
+            opacity: 0.9;
+        }
+
+        /* ── Mobile Responsive ──────────────────────────────── */
+
+        @media (max-width: 900px) {
+            .hero-grid {
+                grid-template-columns: 1fr;
+                gap: 48px;
+            }
+
+            .hero {
+                padding: 120px 0 60px;
+            }
+
+            .hero h1 {
+                font-size: 38px;
+            }
+
+            .problem-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .feature-card.feature-large {
+                grid-row: auto;
+            }
+
+            .steps {
+                grid-template-columns: 1fr 1fr;
+                gap: 40px 0;
+            }
+
+            .steps::before {
+                display: none;
+            }
+
+            .stats-row {
+                grid-template-columns: 1fr 1fr;
+                gap: 40px;
+            }
+
+            .section-heading {
+                font-size: 28px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 64px;
+                left: 0;
+                right: 0;
+                background: var(--bg-raised);
+                border-bottom: 1px solid var(--border);
+                flex-direction: column;
+                padding: 20px 24px;
+                gap: 16px;
+            }
+
+            .nav-links.open {
+                display: flex;
+            }
+
+            .nav-hamburger {
+                display: block;
+            }
+
+            .hero h1 {
+                font-size: 32px;
+            }
+
+            .hero-sub {
+                font-size: 15px;
+            }
+
+            .hero-actions {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .steps {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-row {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .stat-number {
+                font-size: 42px;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-inner {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .trust-items {
+                gap: 20px;
+            }
+
+            .trust-divider {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ── Navbar ──────────────────────────────────────── -->
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <a href="#" class="nav-logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 2L3 7V12C3 17.25 6.75 22.13 12 23C17.25 22.13 21 17.25 21 12V7L12 2Z" stroke="#00D4AA"
+                        stroke-width="1.5" fill="none" />
+                    <path d="M9 12.5L11 14.5L15 10" stroke="#00D4AA" stroke-width="1.5" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+                <span class="nav-logo-text">Compliance OS</span>
+            </a>
+            <div class="nav-links" id="navLinks">
+                <a href="#features">Features</a>
+                <a href="#how-it-works">How it Works</a>
+                <a href="#pricing">Pricing</a>
+                <a href="auth.html" class="nav-cta">Request Early Access</a>
+            </div>
+            <button class="nav-hamburger" id="navToggle" aria-label="Menu">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="6" x2="21" y2="6" />
+                    <line x1="3" y1="12" x2="21" y2="12" />
+                    <line x1="3" y1="18" x2="21" y2="18" />
+                </svg>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ── Hero ────────────────────────────────────────── -->
+    <section class="hero" id="hero">
+        <div class="hero-orb"></div>
+        <div class="container">
+            <div class="hero-grid">
+                <div class="hero-copy">
+                    <div class="hero-ticker reveal">
+                        <span class="ticker-dot"></span>
+                        <span>New Circular &mdash; Payment Service Providers RDA &mdash; <span
+                                class="ticker-highlight">CRITICAL</span> <span class="ticker-muted">Published 10 Apr
+                                2026</span></span>
+                    </div>
+                    <h1 class="reveal reveal-delay-1">Every IFSCA Circular.<br>Analysed. Delivered.</h1>
+                    <p class="hero-sub reveal reveal-delay-2">Compliance OS monitors 375+ IFSCA circulars daily and
+                        tells your team exactly what changed, what to do, and when&thinsp;&mdash;&thinsp;before the
+                        deadline hits.</p>
+                    <div class="hero-actions reveal reveal-delay-3">
+                        <a href="auth.html" class="btn-primary">Request Early Access</a>
+                        <a href="/auth" class="btn-ghost">See Live Dashboard →</a>
+                    </div>
+                </div>
+                <div class="reveal reveal-delay-2">
+                    <div class="hero-mockup">
+                        <div class="mockup-bar">
+                            <span class="mockup-dot"></span>
+                            <span class="mockup-dot"></span>
+                            <span class="mockup-dot"></span>
+                            <span class="mockup-bar-title">Compliance OS &mdash; Dashboard</span>
+                        </div>
+                        <div class="mockup-header">
+                            <span class="mockup-h">Latest Regulatory Updates</span>
+                            <div class="mockup-stats">
+                                <div class="mockup-stat">
+                                    <div class="mockup-stat-val">375</div>
+                                    <div class="mockup-stat-label">Circulars</div>
+                                </div>
+                                <div class="mockup-stat">
+                                    <div class="mockup-stat-val" style="color:var(--red);">3</div>
+                                    <div class="mockup-stat-label">Critical</div>
+                                </div>
+                            </div>
+                        </div>
+                        <table class="mockup-table">
+                            <thead>
+                                <tr>
+                                    <th>Severity</th>
+                                    <th>Title</th>
+                                    <th>Date</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="badge badge-critical">Critical</span></td>
+                                    <td class="mockup-title-text">Payment Service Providers RDA</td>
+                                    <td class="mockup-date">10 Apr 2026</td>
+                                    <td class="mockup-view">View</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-moderate">Moderate</span></td>
+                                    <td class="mockup-title-text">Fiduciary Segregation in Schemes</td>
+                                    <td class="mockup-date">10 Apr 2026</td>
+                                    <td class="mockup-view">View</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge badge-advisory">Advisory</span></td>
+                                    <td class="mockup-title-text">KMP Certification Requirements</td>
+                                    <td class="mockup-date">01 Apr 2026</td>
+                                    <td class="mockup-view">View</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Trust Bar ───────────────────────────────────── -->
+    <div class="trust-bar">
+        <div class="container">
+            <div class="trust-items">
+                <span class="trust-item"><strong>375+</strong> Circulars Indexed</span>
+                <span class="trust-divider"></span>
+                <span class="trust-item"><strong>5</strong> Entity Types</span>
+                <span class="trust-divider"></span>
+                <span class="trust-item"><strong>Updated Daily</strong></span>
+                <span class="trust-divider"></span>
+                <span class="trust-item"><strong>Groq AI</strong> Powered</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Problem Section ─────────────────────────────── -->
+    <section class="problem" id="problem">
+        <div class="container">
+            <div class="section-label reveal">The Problem</div>
+            <h2 class="section-heading reveal reveal-delay-1">The Hidden Cost of Manual Compliance</h2>
+            <div class="problem-grid">
+                <div class="problem-card reveal reveal-delay-1">
+                    <h3>375+ circulars. No system.</h3>
+                    <p>IFSCA has issued 375+ circulars, amendments, and advisories since inception. Most GIFT City
+                        compliance teams track them in spreadsheets or shared folders with no structure, no alerts, and
+                        no audit trail.</p>
+                </div>
+                <div class="problem-card reveal reveal-delay-2">
+                    <h3>One missed deadline. Serious consequences.</h3>
+                    <p>IFSCA penalties for non-compliance include suspension of registration and monetary fines. When
+                        your team is manually scanning PDFs, things get missed. It only takes one.</p>
+                </div>
+                <div class="problem-card reveal reveal-delay-3">
+                    <h3>10+ hours wasted every month.</h3>
+                    <p>Reading, classifying, and distributing regulatory updates is manual, slow, and error-prone for
+                        every compliance team. That time should be spent on actual compliance work, not document triage.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Features Section ────────────────────────────── -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-label reveal">What We Do</div>
+            <h2 class="section-heading reveal reveal-delay-1">Regulatory Intelligence. Automated.</h2>
+            <div class="features-grid">
+                <div class="feature-card feature-large reveal reveal-delay-1">
+                    <div class="feature-number">01</div>
+                    <h3>AI-Powered Circular Analysis</h3>
+                    <p>Every IFSCA circular is automatically scraped the day it is published, classified by severity,
+                        deadline extracted, and action items identified for your specific entity type. No manual
+                        reading. No missed updates.</p>
+                </div>
+                <div class="feature-card reveal reveal-delay-2">
+                    <div class="feature-number">02</div>
+                    <h3>Instant Alerts by Entity Type</h3>
+                    <p>Get notified only about circulars that affect your FME, AIF, IBU, or CMI. No noise. Every alert
+                        tells you exactly what changed and what you need to do.</p>
+                </div>
+                <div class="feature-card reveal reveal-delay-3">
+                    <div class="feature-number">03</div>
+                    <h3>Deadline Tracking</h3>
+                    <p>Never miss a compliance deadline. Every circular with a time-bound obligation is flagged with an
+                        owner, a date, and a severity level your team can act on.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Testimonial ─────────────────────────────────── -->
+    <section class="testimonial">
+        <div class="container reveal">
+            <div class="testimonial-inner">
+                <blockquote>"Finally, a platform built for GIFT City compliance &mdash; not adapted from something
+                    generic."</blockquote>
+                <cite>&mdash; Beta User, Category II FME, GIFT City</cite>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── How It Works ────────────────────────────────── -->
+    <section class="how" id="how-it-works">
+        <div class="container">
+            <div class="section-label reveal">How It Works</div>
+            <h2 class="section-heading reveal reveal-delay-1">From Publication to Your Inbox</h2>
+            <div class="steps">
+                <div class="step reveal reveal-delay-1">
+                    <div class="step-num">1</div>
+                    <p>IFSCA publishes a new circular or notification</p>
+                </div>
+                <div class="step reveal reveal-delay-2">
+                    <div class="step-num">2</div>
+                    <p>We scrape the PDF, extract the text, and run AI analysis</p>
+                </div>
+                <div class="step reveal reveal-delay-3">
+                    <div class="step-num">3</div>
+                    <p>Classified by severity and mapped to affected entity types</p>
+                </div>
+                <div class="step reveal reveal-delay-4">
+                    <div class="step-num">4</div>
+                    <p>Your compliance team gets alerted instantly with action items</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Stats Section ───────────────────────────────── -->
+    <section class="stats-section">
+        <div class="container">
+            <div class="stats-row">
+                <div class="stat-block reveal reveal-delay-1">
+                    <div class="stat-number"><span class="stat-counter" data-target="375" data-suffix="+">0+</span>
+                    </div>
+                    <div class="stat-desc">Circulars Indexed</div>
+                </div>
+                <div class="stat-block reveal reveal-delay-2">
+                    <div class="stat-number">&lt;<span class="stat-counter" data-target="24" data-suffix="h">0h</span>
+                    </div>
+                    <div class="stat-desc">Alert Delivery Time</div>
+                </div>
+                <div class="stat-block reveal reveal-delay-3">
+                    <div class="stat-number">5</div>
+                    <div class="stat-desc">Entity Types Supported</div>
+                </div>
+                <div class="stat-block reveal reveal-delay-4">
+                    <div class="stat-number">100%</div>
+                    <div class="stat-desc">IFSCA Coverage</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Pricing ─────────────────────────────────────── -->
+    <section class="pricing" id="pricing">
+        <div class="container">
+            <div class="section-label reveal" style="text-align:center;">Pricing</div>
+            <h2 class="section-heading reveal reveal-delay-1" style="text-align:center; margin-bottom: 24px;">Simple,
+                Transparent Pricing</h2>
+            <p class="cta-sub reveal reveal-delay-2" style="margin-top:0;">Start free. Scale when you need to.</p>
+
+            <div class="pricing-grid">
+                <!-- Starter -->
+                <div class="pricing-card reveal reveal-delay-1">
+                    <div class="pricing-tier">STARTER</div>
+                    <div class="pricing-price">Free</div>
+                    <ul class="pricing-features">
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg> 5 circular summaries per month</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg> Email alerts (weekly digest)</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg> 1 entity type</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg> Community support</li>
+                    </ul>
+                    <a href="auth.html" class="pricing-btn pricing-btn-secondary">Start Free</a>
+                </div>
+
+                <!-- Professional -->
+                <div class="pricing-card popular reveal reveal-delay-2">
+                    <div class="pricing-badge">Most Popular</div>
+                    <div class="pricing-tier">PROFESSIONAL</div>
+                    <div class="pricing-price">₹4,999<span>/month</span></div>
+                    <ul class="pricing-features">
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg> Unlimited circular summaries</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg> Instant email alerts</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg> All entity types</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg> AI Q&A chat (coming soon)</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg> Deadline calendar</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg> Priority support</li>
+                    </ul>
+                    <a href="auth.html" class="pricing-btn pricing-btn-primary">Request Early Access</a>
+                </div>
+
+                <!-- Enterprise -->
+                <div class="pricing-card reveal reveal-delay-3">
+                    <div class="pricing-tier">ENTERPRISE</div>
+                    <div class="pricing-price">Custom</div>
+                    <ul class="pricing-features">
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg> Everything in Professional</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg> Multi-user team access</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg> API access</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg> White-label reports</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg> Dedicated account manager</li>
+                        <li><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="20 6 9 17 4 12" />
+                            </svg> SLA guarantee</li>
+                    </ul>
+                    <a href="auth.html" class="pricing-btn pricing-btn-secondary">Contact Us</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Early Access ────────────────────────────────── -->
+    <section class="cta-section" id="early-access">
+        <div class="container">
+            <div class="cta-inner">
+                <div class="section-label reveal" style="text-align:center;">Waitlist</div>
+                <h2 class="section-heading reveal reveal-delay-1">Join the Waitlist</h2>
+                <p class="cta-sub reveal reveal-delay-2">We're onboarding 20 GIFT City entities for our private beta. No
+                    cost. No commitment.</p>
+                <form id="earlyAccessForm" action="https://formspree.io/f/xlganejn" method="POST"
+                    class="reveal reveal-delay-3" onsubmit="return handleSubmit(event)">
+                    <input type="hidden" name="_subject" value="New Compliance OS Beta Request">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="fullName">Full Name</label>
+                            <input type="text" id="fullName" name="fullName" placeholder="e.g. Rajesh Sharma" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Work Email</label>
+                            <input type="email" id="email" name="email" placeholder="you@firm.com" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="entityName">Entity / Fund Name</label>
+                            <input type="text" id="entityName" name="entityName"
+                                placeholder="e.g. Meridian Capital IFSC" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="entityType">Entity Type</label>
+                            <select id="entityType" name="entityType" required>
+                                <option value="" disabled selected>Select type</option>
+                                <option value="fme_authorised">Authorised FME</option>
+                                <option value="fme_non_retail">Registered FME Non-Retail</option>
+                                <option value="fme_retail">Registered FME Retail</option>
+                                <option value="ibu">IBU (International Banking Unit)</option>
+                                <option value="cmi">Capital Market Intermediary</option>
+                                <option value="other">Other GIFT City Entity</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-primary form-submit" id="submitBtn">Join the Waitlist</button>
+                    <p class="form-note">Your data is never shared. We'll contact you within 48 hours.</p>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── Footer ──────────────────────────────────────── -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-inner">
+                <div class="footer-left">
+                    <div class="footer-logo">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                            <path d="M12 2L3 7V12C3 17.25 6.75 22.13 12 23C17.25 22.13 21 17.25 21 12V7L12 2Z"
+                                stroke="#00D4AA" stroke-width="1.5" fill="none" />
+                            <path d="M9 12.5L11 14.5L15 10" stroke="#00D4AA" stroke-width="1.5" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                        <span class="footer-logo-text">Compliance OS</span>
+                    </div>
+                    <span class="footer-tagline">Regulatory intelligence for GIFT City</span>
+                </div>
+                <div class="footer-links">
+                    <a href="index.html">Dashboard</a>
+                    <a href="#">Privacy Policy</a>
+                    <a href="#" aria-label="LinkedIn">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+            <div class="footer-copy">
+                &copy; 2026 Compliance OS. Built for IFSCA entities in GIFT City IFSC. <br><span
+                    style="display:inline-block; margin-top:8px; color:var(--text-secondary);">Made with ❤️ in GIFT
+                    City, India</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        /* ── Number Counter ─────────────────────────────── */
+        const countUp = (el) => {
+            const target = parseInt(el.getAttribute('data-target'));
+            const suffix = el.getAttribute('data-suffix') || '';
+            const duration = 1500; // 1.5 seconds
+            const start = performance.now();
+
+            const update = (currentTime) => {
+                const elapsed = currentTime - start;
+                const progress = Math.min(elapsed / duration, 1);
+
+                // easeOutQuart
+                const ease = 1 - Math.pow(1 - progress, 4);
+
+                const currentObj = Math.floor(target * ease);
+                el.innerText = currentObj + suffix;
+
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                } else {
+                    el.innerText = target + suffix;
+                }
+            };
+            requestAnimationFrame(update);
+        };
+
+        const statObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const counters = entry.target.querySelectorAll('.stat-counter');
+                    counters.forEach(countUp);
+                    statObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.5 });
+
+        const statsSection = document.querySelector('.stats-section');
+        if (statsSection) statObserver.observe(statsSection);
+
+        /* ── Scroll Reveal ──────────────────────────────── */
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+        /* ── Mobile Nav ─────────────────────────────────── */
+        document.getElementById('navToggle').addEventListener('click', () => {
+            document.getElementById('navLinks').classList.toggle('open');
+        });
+
+        /* ── Smooth Scroll ──────────────────────────────── */
+        document.querySelectorAll('a[href^="#"]').forEach(a => {
+            a.addEventListener('click', e => {
+                e.preventDefault();
+                const target = document.querySelector(a.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    document.getElementById('navLinks').classList.remove('open');
+                }
+            });
+        });
+
+        /* ── Form Submit ────────────────────────────────── */
+        async function handleSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const btn = document.getElementById('submitBtn');
+            const original = btn.textContent;
+            btn.textContent = 'Submitting...';
+            btn.disabled = true;
+
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch(form.action, {
+                    method: form.method,
+                    body: formData,
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                if (response.ok) {
+                    btn.textContent = "✅ Request received. We'll contact you within 48 hours.";
+                    btn.style.background = '#059669';
+                    setTimeout(() => {
+                        btn.textContent = original;
+                        btn.style.background = '';
+                        btn.disabled = false;
+                        form.reset();
+                    }, 4000);
+                } else {
+                    btn.textContent = 'Error sending request';
+                    btn.style.background = '#EF4444';
+                    setTimeout(() => {
+                        btn.textContent = original;
+                        btn.style.background = '';
+                        btn.disabled = false;
+                    }, 3000);
+                }
+            } catch (err) {
+                btn.textContent = 'Network Error';
+                btn.style.background = '#EF4444';
+                setTimeout(() => {
+                    btn.textContent = original;
+                    btn.style.background = '';
+                    btn.disabled = false;
+                }, 3000);
+            }
+
+            return false;
+        }
+    </script>
+</body>
+
+</html>

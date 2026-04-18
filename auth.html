@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compliance OS — Authentication</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .auth-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .auth-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 32px;
+            justify-content: center;
+        }
+
+        .auth-title {
+            font-family: var(--font-heading);
+            font-size: 24px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .auth-subtitle {
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 32px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .form-group input {
+            width: 100%;
+            background: var(--bg-raised);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 10px 12px;
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--teal);
+        }
+
+        .auth-btn {
+            width: 100%;
+            background: var(--teal);
+            color: var(--bg-base);
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            margin-top: 10px;
+            font-family: var(--font-body);
+        }
+
+        .auth-btn:hover {
+            opacity: 0.9;
+        }
+
+        .auth-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .auth-error {
+            color: #ef4444;
+            font-size: 13px;
+            margin-bottom: 16px;
+            text-align: center;
+            min-height: 18px;
+        }
+
+        .auth-toggle {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .auth-toggle a {
+            color: var(--teal);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .auth-toggle a:hover {
+            text-decoration: underline;
+        }
+
+        .forgot-password {
+            display: block;
+            text-align: right;
+            font-size: 12px;
+            color: var(--text-muted);
+            text-decoration: none;
+            margin-top: 6px;
+        }
+
+        .forgot-password:hover {
+            color: var(--text-primary);
+        }
+    </style>
+    
+    <!-- ── Supabase Setup ───────────────────────────── -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Replace these with your actual Supabase URL and Anon Key
+        const supabaseUrl = 'YOUR_SUPABASE_URL';
+        const supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
+        
+        const cookieStorage = {
+            getItem: (key) => {
+                const name = key + "=";
+                const ca = decodeURIComponent(document.cookie).split(';');
+                for(let i = 0; i <ca.length; i++) {
+                    let c = ca[i].trim();
+                    if (c.indexOf(name) === 0) return c.substring(name.length, c.length);
+                }
+                return null;
+            },
+            setItem: (key, value) => {
+                const d = new Date();
+                d.setTime(d.getTime() + (7*24*60*60*1000));
+                document.cookie = key + "=" + value + ";expires=" + d.toUTCString() + ";path=/;SameSite=Lax";
+            },
+            removeItem: (key) => {
+                document.cookie = key + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            }
+        };
+
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey, {
+            auth: { storage: cookieStorage, autoRefreshToken: true, persistSession: true, detectSessionInUrl: false }
+        });
+
+        // Redirect if already logged in
+        (async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                window.location.replace('dashboard.html');
+            }
+        })();
+    </script>
+</head>
+<body>
+
+    <div class="auth-card">
+        <a href="index.html" class="auth-logo" style="text-decoration:none;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L3 7V12C3 17.25 6.75 22.13 12 23C17.25 22.13 21 17.25 21 12V7L12 2Z" stroke="#00D4AA" stroke-width="1.5" fill="none" />
+                <path d="M9 12.5L11 14.5L15 10" stroke="#00D4AA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span style="font-family: var(--font-heading); color: var(--text-primary); font-weight:600; font-size:18px;">Compliance OS</span>
+        </a>
+
+        <div id="authView">
+            <h2 class="auth-title" id="authTitle">Sign In</h2>
+            <p class="auth-subtitle" id="authSubtitle">Welcome back to Compliance OS</p>
+            
+            <div class="auth-error" id="authError"></div>
+
+            <form id="authForm" onsubmit="return handleAuth(event)">
+                <div class="form-group">
+                    <label for="email">Work Email</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="form-group" style="margin-bottom:8px;">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required minlength="6">
+                </div>
+                <a href="#" class="forgot-password" id="forgotPwd" style="display:block;">Forgot Password?</a>
+
+                <button type="submit" class="auth-btn" id="authBtn">Sign In</button>
+            </form>
+
+            <div class="auth-toggle">
+                <span id="toggleText">Don't have an account?</span> <a href="#" id="toggleLink">Sign Up</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let mode = 'login'; // or 'signup', 'forgot'
+
+        const form = document.getElementById('authForm');
+        const title = document.getElementById('authTitle');
+        const subtitle = document.getElementById('authSubtitle');
+        const btn = document.getElementById('authBtn');
+        const error = document.getElementById('authError');
+        const toggleText = document.getElementById('toggleText');
+        const toggleLink = document.getElementById('toggleLink');
+        const forgotPwd = document.getElementById('forgotPwd');
+
+        toggleLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            error.textContent = '';
+            
+            if (mode === 'login' || mode === 'forgot') {
+                mode = 'signup';
+                title.textContent = 'Create Account';
+                subtitle.textContent = 'Join Compliance OS early access';
+                btn.textContent = 'Sign Up';
+                toggleText.textContent = 'Already have an account?';
+                toggleLink.textContent = 'Sign In';
+                forgotPwd.style.display = 'none';
+                document.getElementById('password').parentElement.style.display = 'block';
+                document.getElementById('password').required = true;
+            } else {
+                mode = 'login';
+                title.textContent = 'Sign In';
+                subtitle.textContent = 'Welcome back to Compliance OS';
+                btn.textContent = 'Sign In';
+                toggleText.textContent = "Don't have an account?";
+                toggleLink.textContent = 'Sign Up';
+                forgotPwd.style.display = 'block';
+                document.getElementById('password').parentElement.style.display = 'block';
+                document.getElementById('password').required = true;
+            }
+        });
+
+        forgotPwd.addEventListener('click', (e) => {
+            e.preventDefault();
+            mode = 'forgot';
+            error.textContent = '';
+            title.textContent = 'Reset Password';
+            subtitle.textContent = 'We will send you a reset link';
+            btn.textContent = 'Send Reset Link';
+            forgotPwd.style.display = 'none';
+            document.getElementById('password').parentElement.style.display = 'none';
+            document.getElementById('password').required = false;
+            
+            toggleText.textContent = "Remembered it?";
+            toggleLink.textContent = 'Sign In';
+        });
+
+        async function handleAuth(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            error.textContent = '';
+            error.style.color = '#ef4444';
+            btn.disabled = true;
+            const originalText = btn.textContent;
+            btn.textContent = 'Please wait...';
+
+            try {
+                if (mode === 'signup') {
+                    const { data, error: sbError } = await supabase.auth.signUp({
+                        email, password
+                    });
+                    if (sbError) throw sbError;
+                    
+                    if (data?.user?.identities?.length === 0) {
+                        throw new Error("User already exists. Please sign in.");
+                    }
+                    
+                    error.style.color = '#059669'; // Green success
+                    error.textContent = 'Success! Check your email for verification link.';
+                } 
+                else if (mode === 'login') {
+                    const { data, error: sbError } = await supabase.auth.signInWithPassword({
+                        email, password
+                    });
+                    if (sbError) throw sbError;
+                    window.location.replace('dashboard.html');
+                }
+                else if (mode === 'forgot') {
+                    const { error: sbError } = await supabase.auth.resetPasswordForEmail(email, {
+                        redirectTo: window.location.origin + '/auth.html',
+                    });
+                    if (sbError) throw sbError;
+                    error.style.color = '#059669'; // Green success
+                    error.textContent = 'Password reset link sent!';
+                }
+            } catch (err) {
+                error.textContent = err.message || 'An error occurred. Please try again.';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+
+            return false;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI-powered regulatory compliance intelligence for GIFT City IFSC entities">
+    <title>GIFT City Compliance OS — Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- ── Supabase Auth Guard ───────────────────────────── -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Replace these with your actual Supabase URL and Anon Key
+        const supabaseUrl = 'YOUR_SUPABASE_URL';
+        const supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
+        
+        // Custom cookie storage to bypass Vercel localStorage restrictions
+        const cookieStorage = {
+            getItem: (key) => {
+                const name = key + "=";
+                const ca = decodeURIComponent(document.cookie).split(';');
+                for(let i = 0; i <ca.length; i++) {
+                    let c = ca[i].trim();
+                    if (c.indexOf(name) === 0) return c.substring(name.length, c.length);
+                }
+                return null;
+            },
+            setItem: (key, value) => {
+                const d = new Date();
+                d.setTime(d.getTime() + (7*24*60*60*1000)); // 7 days
+                document.cookie = key + "=" + value + ";expires=" + d.toUTCString() + ";path=/;SameSite=Lax";
+            },
+            removeItem: (key) => {
+                document.cookie = key + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            }
+        };
+
+        const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey, {
+            auth: {
+                storage: cookieStorage,
+                autoRefreshToken: true,
+                persistSession: true,
+                detectSessionInUrl: false
+            }
+        });
+
+        // Make it globally available
+        window.supabaseInstance = supabaseClient;
+
+        // Blocking check
+        (async function checkAuth() {
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session) {
+                    window.location.replace('auth.html');
+                } else {
+                    window.USER_EMAIL = session.user.email;
+                    window.USER_TOKEN = session.access_token;
+                }
+            } catch (err) {
+                console.error("Auth error:", err);
+                window.location.replace('auth.html');
+            }
+        })();
+    </script>
+</head>
+<body>
+    <div id="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">
+                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                            <rect width="28" height="28" rx="8" fill="url(#logo-grad)"/>
+                            <path d="M8 14L12 10L16 14L20 10" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M8 18L12 14L16 18L20 14" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+                            <defs><linearGradient id="logo-grad" x1="0" y1="0" x2="28" y2="28"><stop stop-color="#3B82F6"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient></defs>
+                        </svg>
+                    </div>
+                    <div class="logo-text">
+                        <span class="logo-title">Compliance OS</span>
+                        <span class="logo-subtitle">GIFT City IFSC</span>
+                    </div>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-page="dashboard">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" data-page="alerts">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    <span>Alert Feed</span>
+                </a>
+                <a href="#" class="nav-item" data-page="settings">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                    <span>Settings</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-badge">
+                    <div class="user-avatar">M</div>
+                    <div class="user-info">
+                        <span class="user-name" id="userEmailDisplay" style="word-break: break-all; font-size: 13px;">...</span>
+                        <a href="#" id="btnLogout" style="color:var(--text-muted); font-size:12px; margin-top:2px; display:inline-block; text-decoration:none;">Sign Out</a>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="top-bar">
+                <div class="top-bar-left">
+                    <h1 class="page-title" id="pageTitle">Dashboard</h1>
+                    <span class="page-subtitle" id="pageSubtitle">Regulatory intelligence overview</span>
+                </div>
+                <div class="top-bar-right">
+                    <div class="last-updated" id="lastUpdated">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        <span>Loading...</span>
+                    </div>
+                    <button class="btn-refresh" id="btnRefresh" title="Refresh data">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Stats Cards -->
+            <section class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-icon blue">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    </div>
+                    <div class="stat-data">
+                        <span class="stat-value" id="statTotal">--</span>
+                        <span class="stat-label">Total Circulars</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon red">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    </div>
+                    <div class="stat-data">
+                        <span class="stat-value" id="statCritical">--</span>
+                        <span class="stat-label">Critical Alerts</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon amber">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    </div>
+                    <div class="stat-data">
+                        <span class="stat-value" id="statModerate">--</span>
+                        <span class="stat-label">Moderate</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    </div>
+                    <div class="stat-data">
+                        <span class="stat-value" id="statRecent">--</span>
+                        <span class="stat-label">Last 7 Days</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Circulars Table -->
+            <section class="table-section">
+                <div class="table-header">
+                    <h2>Latest Regulatory Updates</h2>
+                    <div class="table-filters">
+                        <select id="filterSeverity" class="filter-select">
+                            <option value="">All Severities</option>
+                            <option value="critical">Critical</option>
+                            <option value="moderate">Moderate</option>
+                            <option value="advisory">Advisory</option>
+                        </select>
+                        <select id="filterType" class="filter-select">
+                            <option value="">All Types</option>
+                            <option value="circular">Circulars</option>
+                            <option value="notification">Notifications</option>
+                            <option value="guideline">Guidelines</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="circulars-table" id="circularsTable">
+                        <thead>
+                            <tr>
+                                <th class="col-severity">Severity</th>
+                                <th class="col-title">Title</th>
+                                <th class="col-type">Type</th>
+                                <th class="col-date">Date</th>
+                                <th class="col-action">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="circularsBody">
+                            <tr class="loading-row">
+                                <td colspan="5">
+                                    <div class="loading-spinner"></div>
+                                    <span>Loading circulars...</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Pagination -->
+                <div class="pagination" id="pagination"></div>
+            </section>
+        </main>
+
+        <!-- Detail Modal -->
+        <div class="modal-overlay" id="modalOverlay">
+            <div class="modal" id="detailModal">
+                <button class="modal-close" id="modalClose">&times;</button>
+                <div class="modal-content" id="modalContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
