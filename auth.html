@@ -171,13 +171,14 @@
             }
         };
 
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey, {
+        const { createClient } = supabase;
+        const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
             auth: { storage: cookieStorage, autoRefreshToken: true, persistSession: true, detectSessionInUrl: false }
         });
 
         // Redirect if already logged in
         (async () => {
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
                 window.location.replace('dashboard.html');
             }
@@ -288,7 +289,7 @@
 
             try {
                 if (mode === 'signup') {
-                    const { data, error: sbError } = await supabase.auth.signUp({
+                    const { data, error: sbError } = await supabaseClient.auth.signUp({
                         email, password
                     });
                     if (sbError) throw sbError;
@@ -301,14 +302,14 @@
                     error.textContent = 'Success! Check your email for verification link.';
                 } 
                 else if (mode === 'login') {
-                    const { data, error: sbError } = await supabase.auth.signInWithPassword({
+                    const { data, error: sbError } = await supabaseClient.auth.signInWithPassword({
                         email, password
                     });
                     if (sbError) throw sbError;
                     window.location.replace('dashboard.html');
                 }
                 else if (mode === 'forgot') {
-                    const { error: sbError } = await supabase.auth.resetPasswordForEmail(email, {
+                    const { error: sbError } = await supabaseClient.auth.resetPasswordForEmail(email, {
                         redirectTo: window.location.origin + '/auth.html',
                     });
                     if (sbError) throw sbError;
