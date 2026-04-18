@@ -7,7 +7,7 @@
 // Change API_BASE to your Render.com URL before deploying:
 //   https://giftcity-compliance-api.onrender.com
 const CONFIG = {
-    API_BASE: 'http://localhost:8000',
+    API_BASE: 'https://giftcity-compliance-api.onrender.com',
 };
 
 // ── State ────────────────────────────────────────────────
