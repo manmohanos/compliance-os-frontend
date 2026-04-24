@@ -414,6 +414,32 @@ async function openDetail(id) {
             </div>` : ''}
     `;
 
+    // ── Phase 2D: Initialize AI Chat Panel
+    state.chatHistory = [];
+    const chatPanelHtml = `
+        <div class="chat-panel">
+            <div class="chat-header">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                Ask AI about this circular
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                <div class="chat-chips" id="chatChips">
+                    <div class="chat-chip">What are the key compliance deadlines?</div>
+                    <div class="chat-chip">Which entity types does this apply to?</div>
+                    <div class="chat-chip">What action do I need to take?</div>
+                </div>
+            </div>
+            
+            <div class="chat-input-row">
+                <input type="text" id="chatInput" class="chat-input" placeholder="e.g. Does this apply to Category II AIFs?">
+                <button id="btnAskAI" class="btn-ask">Ask</button>
+            </div>
+        </div>
+    `;
+    
+    content.innerHTML += chatPanelHtml;
+
     // ── Phase 2A: Attach Copy Listeners
     const btnSummary = document.getElementById('btnCopySummary');
     if (btnSummary && !btnSummary.disabled) {
@@ -434,6 +460,95 @@ async function openDetail(id) {
             const old = lbl.textContent;
             lbl.textContent = "Copied ✓";
             setTimeout(() => lbl.textContent = old, 2000);
+        });
+    }
+
+    // ── Phase 2D: Attach Chat Listeners
+    setupChatListeners(data, alert);
+}
+
+// ── Phase 2D: Chat Logic ─────────────────────────────────
+
+function setupChatListeners(data, alert) {
+    const input = document.getElementById('chatInput');
+    const btnAsk = document.getElementById('btnAskAI');
+    const messagesContainer = document.getElementById('chatMessages');
+    const chipsContainer = document.getElementById('chatChips');
+    
+    const submitChat = async (question) => {
+        if (!question.trim()) return;
+        
+        if (chipsContainer) chipsContainer.style.display = 'none';
+        
+        messagesContainer.insertAdjacentHTML('beforeend', `<div class="chat-bubble user">${escapeHtml(question)}</div>`);
+        input.value = '';
+        input.disabled = true;
+        btnAsk.disabled = true;
+        
+        const loaderId = 'loader-' + Date.now();
+        messagesContainer.insertAdjacentHTML('beforeend', `<div id="${loaderId}" class="chat-bubble ai"><span class="chat-skeleton">Thinking...</span></div>`);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        
+        try {
+            const reqBody = {
+                circular_id: data.id,
+                circular_title: data.title,
+                circular_content: alert.summary || data.title,
+                question: question,
+                conversation_history: state.chatHistory || []
+            };
+            
+            const res = await fetch(`${CONFIG.API_BASE}/api/circular-chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(reqBody)
+            });
+            
+            if (!res.ok) throw new Error("API error");
+            const resData = await res.json();
+            
+            if (!state.chatHistory) state.chatHistory = [];
+            state.chatHistory.push(
+                { role: "user", content: question },
+                { role: "assistant", content: resData.answer }
+            );
+            
+            const loader = document.getElementById(loaderId);
+            if (loader) {
+                loader.outerHTML = `
+                    <div class="chat-bubble ai">
+                        ${escapeHtml(resData.answer).replace(/\\n/g, '<br>')}
+                        <span class="chat-source">Source: ${resData.circular_ref || data.id} &middot; Compliance OS AI</span>
+                    </div>
+                `;
+            }
+        } catch (err) {
+            const loader = document.getElementById(loaderId);
+            if (loader) {
+                loader.outerHTML = `
+                    <div class="chat-bubble ai" style="color:#EF4444;">
+                        AI is temporarily unavailable. Please try again in a moment.
+                    </div>
+                `;
+            }
+        } finally {
+            input.disabled = false;
+            btnAsk.disabled = false;
+            input.focus();
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    };
+
+    btnAsk.addEventListener('click', () => submitChat(input.value));
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') submitChat(input.value);
+    });
+    
+    if (chipsContainer) {
+        chipsContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('chat-chip')) {
+                submitChat(e.target.textContent);
+            }
         });
     }
 }
