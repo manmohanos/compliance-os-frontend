@@ -734,6 +734,112 @@ body {
     }
 }
 
+/* ── Phase 2: Urgent Banner ─────────────────────────────── */
+.urgent-banner {
+    background: rgba(239, 68, 68, 0.1);
+    color: #EF4444;
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(239, 68, 68, 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+.urgent-banner.hidden { display: none; }
+.urgent-banner:hover { background: rgba(239, 68, 68, 0.15); }
+.urgent-banner.clear-active { 
+    background: rgba(16, 185, 129, 0.1); 
+    color: #10B981; 
+    border-color: rgba(16, 185, 129, 0.2); 
+    cursor: default; 
+}
+.urgent-banner a {
+    color: inherit;
+    text-decoration: underline;
+    font-size: 12px;
+    font-weight: 400;
+    cursor: pointer;
+}
+
+/* ── Phase 2A: Action Toolbar ─────────────────────────────── */
+.detail-toolbar {
+    display: flex;
+    gap: 8px;
+    padding: 16px 28px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-card);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+}
+.btn-toolbar {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.btn-toolbar:hover:not(:disabled) {
+    border-color: var(--accent-blue);
+    color: var(--accent-blue);
+}
+.btn-toolbar:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.print-header { display: none; }
+
+/* ── Phase 2A: Print Styles ─────────────────────────────── */
+@media print {
+    body {
+        background: #fff !important;
+        color: #000 !important;
+    }
+    .sidebar, .top-bar, .stats-grid, .table-pane, .detail-toolbar {
+        display: none !important;
+    }
+    .main-content {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    .split-layout {
+        display: block !important;
+    }
+    .detail-pane {
+        position: static !important;
+        border: none !important;
+        box-shadow: none !important;
+        background: #fff !important;
+        max-height: none !important;
+        overflow: visible !important;
+    }
+    .modal-content, .modal-title, .modal-section-body, .modal-provisions li {
+        color: #000 !important;
+        font-family: Georgia, serif !important;
+    }
+    .modal-severity { margin-top: 40px !important; }
+    
+    .print-header {
+        display: block !important;
+        border-bottom: 2px solid #000;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+        font-family: sans-serif;
+    }
+    .print-header h1 { font-size: 18px; margin: 0; }
+    .print-header p { font-size: 12px; margin: 4px 0 0; color: #555; }
+}
+
 @media (max-width: 768px) {
     .sidebar {
         display: none;

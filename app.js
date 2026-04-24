@@ -51,7 +51,8 @@ let state = {
     filters: { severity: '', document_type: '' },
     loading: false,
     readItems: new Set(JSON.parse(localStorage.getItem('compliance_os_read_items') || '[]')),
-    activeId: null
+    activeId: null,
+    urgentFilterActive: false
 };
 
 // ── API Functions ────────────────────────────────────────
@@ -81,6 +82,14 @@ async function fetchCirculars(page = 1) {
         renderTable();
         renderPagination();
         updateLastUpdated();
+        renderUrgentBanner();
+
+        // ── Phase 2C: URL Check
+        if (!state.activeId && parseInt(page) === 1) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const circularId = urlParams.get('circular');
+            if (circularId) openDetail(circularId);
+        }
     } catch (err) {
         console.error('Failed to fetch circulars:', err);
         state.loading = false;
@@ -123,23 +132,33 @@ function renderStats() {
 function renderTable() {
     const tbody = document.getElementById('circularsBody');
 
-    if (state.circulars.length === 0) {
+    let displayList = state.circulars;
+    if (state.urgentFilterActive) {
+        displayList = displayList.filter(item => {
+            const alerts = item.processed_alerts;
+            const alert = Array.isArray(alerts) ? alerts[0] : (alerts || {});
+            const sev = (alert.severity || '').toLowerCase();
+            return (sev === 'critical' || sev === 'high') && !state.readItems.has(item.id);
+        });
+    }
+
+    if (displayList.length === 0) {
         tbody.innerHTML = `
             <tr class="loading-row">
-                <td colspan="5">
+                <td colspan="3">
                     <div class="empty-state">
                         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                             <polyline points="14 2 14 8 20 8"/>
                         </svg>
-                        <p>No circulars match your filters</p>
+                        <p>No circulars match your filters.</p>
                     </div>
                 </td>
             </tr>`;
         return;
     }
 
-    tbody.innerHTML = state.circulars.map(item => {
+    tbody.innerHTML = displayList.map(item => {
         // Supabase may return processed_alerts as array or single object
         const alerts = item.processed_alerts;
         const alert = Array.isArray(alerts) ? alerts[0] : alerts;
@@ -148,7 +167,6 @@ function renderTable() {
         const formattedDate = formatDate(item.published_date);
         const docType = item.document_type || 'circular';
 
-        return `
         const isRead = state.readItems.has(item.id);
         const isActive = state.activeId === item.id;
         const rowClasses = `circular-row ${!isRead ? 'unread' : ''} ${isActive ? 'active' : ''}`.trim();
@@ -156,7 +174,7 @@ function renderTable() {
         return `
             <tr class="${rowClasses}" data-id="${item.id}" onclick="openDetail('${item.id}')">
                 <td>
-                    <span class="severity-badge ${severity}">${severity.slice(0,3)}</span>
+                    <span class="severity-badge ${severity}">${severity.substring(0,3)}</span>
                 </td>
                 <td>
                     <div class="circular-title">${escapeHtml(item.title)}</div>
@@ -166,6 +184,46 @@ function renderTable() {
                 </td>
             </tr>`;
     }).join('');
+}
+
+function renderUrgentBanner() {
+    const banner = document.getElementById('urgentBanner');
+    if (!banner || !state.circulars) return;
+
+    if (state.urgentFilterActive) {
+        banner.className = 'urgent-banner clear-active';
+        banner.innerHTML = `<span>Showing urgent unread items.</span> <a onclick="event.stopPropagation(); filterUrgent(false)">Clear filter</a>`;
+        return;
+    }
+    
+    // Count unread critical/high
+    const unreadUrgent = state.circulars.filter(item => {
+        const alerts = item.processed_alerts;
+        const alert = Array.isArray(alerts) ? alerts[0] : (alerts || {});
+        const sev = (alert.severity || '').toLowerCase();
+        return (sev === 'critical' || sev === 'high') && !state.readItems.has(item.id);
+    });
+    
+    const count = unreadUrgent.length;
+    
+    if (count > 0) {
+        banner.className = 'urgent-banner';
+        banner.innerHTML = `<span>⚠ ${count} critical circular${count>1?'s':''} require your attention this week</span> <span>Filter &rarr;</span>`;
+    } else {
+        banner.className = 'urgent-banner clear-active';
+        banner.innerHTML = `<span>✓ You are up to date. No critical items pending.</span>`;
+    }
+}
+
+window.filterUrgent = function(forceState) {
+    if (forceState !== undefined) {
+        state.urgentFilterActive = forceState;
+    } else {
+        if (document.getElementById('urgentBanner').className.includes('clear-active')) return;
+        state.urgentFilterActive = true;
+    }
+    renderTable();
+    renderUrgentBanner();
 }
 
 function renderPagination() {
@@ -231,13 +289,19 @@ async function openDetail(id) {
     state.activeId = id;
     state.readItems.add(id);
     localStorage.setItem('compliance_os_read_items', JSON.stringify([...state.readItems]));
-    renderTable(); // Update active/unread classes
+    renderTable(); 
+    renderUrgentBanner();
+
+    // ── Phase 2C: Update URL 
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.set('circular', id);
+    window.history.pushState({ path: newUrl.href }, '', newUrl.href);
 
     content.innerHTML = '<div class="loading-spinner" style="margin:40px auto;"></div>';
 
     const data = await fetchCircularDetail(id);
     if (!data) {
-        content.innerHTML = '<div class="empty-detail"><p style="color:var(--text-muted);">Failed to load details</p></div>';
+        content.innerHTML = '<div class="empty-detail"><p style="color:var(--text-muted);">Circular not found. It may have been removed or the link is outdated.</p></div>';
         return;
     }
 
@@ -276,7 +340,36 @@ async function openDetail(id) {
         'other': 'Other GIFT City Entity',
     };
 
-    content.innerHTML = `
+    const aiSummaryText = alert.summary ? alert.summary : null;
+    let userEmailString = window.USER_EMAIL ? window.USER_EMAIL.split('@')[0] : '';
+    
+    const emailDraftText = `Subject: ${data.id || 'Update'} — ${data.title} | Action Required\n\nTeam,\n\nA new regulatory circular has been issued that may require our attention.\n\nCircular: ${data.title}\nReference: ${data.id || 'N/A'}\nDate: ${formatDate(data.published_date)}\nIssuing Authority: ${data.issuing_authority || 'IFSCA'}\nSeverity: ${severityLabel}\n\nSummary:\n${alert.summary ? alert.summary : (data.title)}\n\nPlease review and advise on applicability.\n\n${userEmailString}`;
+
+    const printHeaderHtml = `
+        <div class="print-header">
+            <h1>Compliance OS | GIFT City Regulatory Intelligence</h1>
+            <p>Printed: ${new Date().toLocaleDateString('en-IN')} | Reference: ${data.id || 'N/A'}</p>
+        </div>
+    `;
+
+    const toolbarHtml = `
+        <div class="detail-toolbar">
+            <button class="btn-toolbar" id="btnCopySummary" ${!aiSummaryText ? 'disabled title="AI summary not available for this circular"' : ''}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                <span class="btn-label">Copy AI Summary</span>
+            </button>
+            <button class="btn-toolbar" id="btnCopyEmail">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                <span class="btn-label">Copy Email Draft</span>
+            </button>
+            <button class="btn-toolbar" onclick="window.print()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                <span>Export PDF</span>
+            </button>
+        </div>
+    `;
+
+    content.innerHTML = toolbarHtml + printHeaderHtml + `
         <div class="modal-severity">
             <span class="severity-badge ${severity}">${severityLabel}</span>
         </div>
@@ -320,6 +413,29 @@ async function openDetail(id) {
                 </div>
             </div>` : ''}
     `;
+
+    // ── Phase 2A: Attach Copy Listeners
+    const btnSummary = document.getElementById('btnCopySummary');
+    if (btnSummary && !btnSummary.disabled) {
+        btnSummary.addEventListener('click', async () => {
+            await navigator.clipboard.writeText(aiSummaryText);
+            const lbl = btnSummary.querySelector('.btn-label');
+            const old = lbl.textContent;
+            lbl.textContent = "Copied ✓";
+            setTimeout(() => lbl.textContent = old, 2000);
+        });
+    }
+
+    const btnEmail = document.getElementById('btnCopyEmail');
+    if (btnEmail) {
+        btnEmail.addEventListener('click', async () => {
+            await navigator.clipboard.writeText(emailDraftText);
+            const lbl = btnEmail.querySelector('.btn-label');
+            const old = lbl.textContent;
+            lbl.textContent = "Copied ✓";
+            setTimeout(() => lbl.textContent = old, 2000);
+        });
+    }
 }
 
 // ── Helpers ──────────────────────────────────────────────
