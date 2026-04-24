@@ -50,6 +50,8 @@ let state = {
     totalPages: 0,
     filters: { severity: '', document_type: '' },
     loading: false,
+    readItems: new Set(JSON.parse(localStorage.getItem('compliance_os_read_items') || '[]')),
+    activeId: null
 };
 
 // ── API Functions ────────────────────────────────────────
@@ -147,21 +149,20 @@ function renderTable() {
         const docType = item.document_type || 'circular';
 
         return `
-            <tr data-id="${item.id}" onclick="openDetail('${item.id}')">
+        const isRead = state.readItems.has(item.id);
+        const isActive = state.activeId === item.id;
+        const rowClasses = `circular-row ${!isRead ? 'unread' : ''} ${isActive ? 'active' : ''}`.trim();
+
+        return `
+            <tr class="${rowClasses}" data-id="${item.id}" onclick="openDetail('${item.id}')">
                 <td>
-                    <span class="severity-badge ${severity}">${severityLabel}</span>
+                    <span class="severity-badge ${severity}">${severity.slice(0,3)}</span>
                 </td>
                 <td>
                     <div class="circular-title">${escapeHtml(item.title)}</div>
                 </td>
                 <td>
-                    <span class="type-badge">${docType}</span>
-                </td>
-                <td>
                     <span class="circular-date">${formattedDate}</span>
-                </td>
-                <td>
-                    <button class="btn-view" onclick="event.stopPropagation(); openDetail('${item.id}')">View</button>
                 </td>
             </tr>`;
     }).join('');
@@ -222,18 +223,21 @@ function updateLastUpdated() {
     el.querySelector('span').textContent = `Updated ${now.toLocaleTimeString()}`;
 }
 
-// ── Detail Modal ─────────────────────────────────────────
+// ── Detail Pane ─────────────────────────────────────────
 
 async function openDetail(id) {
-    const overlay = document.getElementById('modalOverlay');
-    const content = document.getElementById('modalContent');
+    const content = document.getElementById('detailPane');
+
+    state.activeId = id;
+    state.readItems.add(id);
+    localStorage.setItem('compliance_os_read_items', JSON.stringify([...state.readItems]));
+    renderTable(); // Update active/unread classes
 
     content.innerHTML = '<div class="loading-spinner" style="margin:40px auto;"></div>';
-    overlay.classList.add('active');
 
     const data = await fetchCircularDetail(id);
     if (!data) {
-        content.innerHTML = '<p style="text-align:center;color:var(--text-muted);">Failed to load details</p>';
+        content.innerHTML = '<div class="empty-detail"><p style="color:var(--text-muted);">Failed to load details</p></div>';
         return;
     }
 
@@ -318,10 +322,6 @@ async function openDetail(id) {
     `;
 }
 
-function closeModal() {
-    document.getElementById('modalOverlay').classList.remove('active');
-}
-
 // ── Helpers ──────────────────────────────────────────────
 
 function formatDate(dateStr) {
@@ -391,12 +391,29 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchCirculars(1);
     });
 
-    // Modal close
-    document.getElementById('modalClose').addEventListener('click', closeModal);
-    document.getElementById('modalOverlay').addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) closeModal();
-    });
+    // Keyboard Navigation
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeModal();
+        if (!state.circulars || state.circulars.length === 0) return;
+        
+        // Find current index
+        let currentIndex = state.circulars.findIndex(c => c.id === state.activeId);
+        
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            const nextIndex = currentIndex === -1 ? 0 : currentIndex + 1;
+            if (nextIndex < state.circulars.length) {
+                openDetail(state.circulars[nextIndex].id);
+                // Scroll table logic if needed
+                const row = document.querySelector(`tr[data-id="${state.circulars[nextIndex].id}"]`);
+                if (row) row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (currentIndex > 0) {
+                openDetail(state.circulars[currentIndex - 1].id);
+                const row = document.querySelector(`tr[data-id="${state.circulars[currentIndex - 1].id}"]`);
+                if (row) row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+        }
     });
 });

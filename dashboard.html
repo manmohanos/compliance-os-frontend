@@ -7,7 +7,7 @@
     <title>GIFT City Compliance OS — Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     
     <!-- ── Supabase Auth Guard ───────────────────────────── -->
@@ -171,58 +171,69 @@
                 </div>
             </section>
 
-            <!-- Circulars Table -->
-            <section class="table-section">
-                <div class="table-header">
-                    <h2>Latest Regulatory Updates</h2>
-                    <div class="table-filters">
-                        <select id="filterSeverity" class="filter-select">
-                            <option value="">All Severities</option>
-                            <option value="critical">Critical</option>
-                            <option value="moderate">Moderate</option>
-                            <option value="advisory">Advisory</option>
-                        </select>
-                        <select id="filterType" class="filter-select">
-                            <option value="">All Types</option>
-                            <option value="circular">Circulars</option>
-                            <option value="notification">Notifications</option>
-                            <option value="guideline">Guidelines</option>
-                        </select>
+            <!-- Circulars Split Layout -->
+            <section class="split-layout">
+                <!-- Left Pane: Table -->
+                <div class="table-pane">
+                    <div class="table-header">
+                        <h2>Latest Regulatory Updates</h2>
+                        <div class="table-filters">
+                            <select id="filterSeverity" class="filter-select">
+                                <option value="">All Sev</option>
+                                <option value="critical">Critical</option>
+                                <option value="moderate">Moderate</option>
+                                <option value="advisory">Advisory</option>
+                            </select>
+                            <select id="filterType" class="filter-select">
+                                <option value="">All Types</option>
+                                <option value="circular">Circulars</option>
+                                <option value="notification">Notifications</option>
+                                <option value="guideline">Guidelines</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="circulars-table" id="circularsTable">
+                            <thead>
+                                <tr>
+                                    <th class="col-severity">Sev</th>
+                                    <th class="col-title">Title</th>
+                                    <th class="col-date">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="circularsBody">
+                                <tr class="loading-row">
+                                    <td colspan="3">
+                                        <div class="loading-spinner"></div>
+                                        <span>Loading circulars...</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Pagination -->
+                    <div class="pagination" id="pagination"></div>
+                </div>
+
+                <!-- Right Pane: Detail View -->
+                <div class="detail-pane">
+                    <div class="modal-content" id="detailPane">
+                        <div class="empty-detail">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--border-light)" stroke-width="1.5">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="16" y1="13" x2="8" y2="13"/>
+                                <line x1="16" y1="17" x2="8" y2="17"/>
+                                <polyline points="10 9 9 9 8 9"/>
+                            </svg>
+                            <p style="margin-top:16px; color:var(--text-muted); font-size:14px;">Select a circular to view its AI analysis and provisions.</p>
+                        </div>
                     </div>
                 </div>
-                <div class="table-container">
-                    <table class="circulars-table" id="circularsTable">
-                        <thead>
-                            <tr>
-                                <th class="col-severity">Severity</th>
-                                <th class="col-title">Title</th>
-                                <th class="col-type">Type</th>
-                                <th class="col-date">Date</th>
-                                <th class="col-action">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="circularsBody">
-                            <tr class="loading-row">
-                                <td colspan="5">
-                                    <div class="loading-spinner"></div>
-                                    <span>Loading circulars...</span>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <!-- Pagination -->
-                <div class="pagination" id="pagination"></div>
             </section>
         </main>
 
-        <!-- Detail Modal -->
-        <div class="modal-overlay" id="modalOverlay">
-            <div class="modal" id="detailModal">
-                <button class="modal-close" id="modalClose">&times;</button>
-                <div class="modal-content" id="modalContent"></div>
-            </div>
-        </div>
+
     </div>
 
     <script src="app.js"></script>
