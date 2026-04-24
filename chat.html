@@ -5,20 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="AI-powered regulatory compliance intelligence for GIFT City IFSC entities">
     <title>Compliance AI — Ask anything about IFSCA, SEBI, RBI regulations</title>
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     
     <!-- ── Supabase & Parsers ────────────────────────────── -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
-        // Replace these with your actual Supabase URL and Anon Key
         const supabaseUrl = 'https://eitutowmqiqxdpbeokcv.supabase.co';
         const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdHV0b3dtcWlxeGRwYmVva2N2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0MjEyNTUsImV4cCI6MjA5MTk5NzI1NX0.EDvtrRUJGDZavcpSIXpR9Bc5ZXxHnCsD3SUqtJv-D2M';
         
-        // Custom cookie storage to bypass Vercel localStorage restrictions
         const cookieStorage = {
             getItem: (key) => {
                 const name = key + "=";
@@ -30,8 +29,7 @@
                 return null;
             },
             setItem: (key, value) => {
-                const d = new Date();
-                d.setTime(d.getTime() + (7*24*60*60*1000)); // 7 days
+                const d = new Date(); d.setTime(d.getTime() + (7*24*60*60*1000));
                 document.cookie = key + "=" + value + ";expires=" + d.toUTCString() + ";path=/;SameSite=Lax";
             },
             removeItem: (key) => {
@@ -40,27 +38,15 @@
         };
         const { createClient } = supabase;
         const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
-            auth: {
-                storage: cookieStorage,
-                autoRefreshToken: true,
-                persistSession: true,
-                detectSessionInUrl: false
-            }
+            auth: { storage: cookieStorage, autoRefreshToken: true, persistSession: true, detectSessionInUrl: false }
         });
-
-        // Make it globally available
         window.supabaseInstance = supabaseClient;
 
-        // Blocking check
         (async function checkAuth() {
             try {
                 const { data: { session } } = await supabaseClient.auth.getSession();
-                if (!session) {
-                    window.location.replace('auth.html');
-                } else {
-                    window.USER_EMAIL = session.user.email;
-                    window.USER_TOKEN = session.access_token;
-                }
+                if (!session) { window.location.replace('auth.html'); }
+                else { window.USER_EMAIL = session.user.email; window.USER_TOKEN = session.access_token; }
             } catch (err) {
                 console.error("Auth error:", err);
                 window.location.replace('auth.html');
@@ -68,88 +54,82 @@
         })();
     </script>
 </head>
-<body>
-    <div id="app" class="premium-chat-app">
-        <!-- Overlay for mobile sidebar -->
+<body class="linear-body">
+    <div id="app" class="linear-layout">
+        <!-- Mobile Overlay -->
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
-        
-        <!-- Mobile Header -->
-        <div class="mobile-header">
-            <button class="btn-hamburger" id="btnHamburger">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+
+        <!-- Mobile Header (hamburger) -->
+        <div class="linear-mobile-header">
+            <button class="linear-hamburger" id="btnHamburger">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
             </button>
-            <div class="mobile-logo">Compliance AI</div>
-            <div style="width:24px;"></div>
+            <div class="mobile-logo-text">Compliance AI</div>
+            <div style="width:20px;"></div>
         </div>
 
         <!-- Sidebar -->
-        <aside class="sidebar premium-sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <div class="logo">
-                    <div class="logo-text">
-                        <span class="logo-title" style="font-weight:600;">Compliance OS</span>
-                        <span class="logo-subtitle">GIFT City IFSC</span>
-                    </div>
+        <aside class="linear-sidebar" id="sidebar">
+            <div class="linear-sidebar-top">
+                <div class="linear-logo">
+                    <div class="linear-logo-title">Compliance OS</div>
+                    <div class="linear-logo-sub">GIFT City IFSC</div>
                 </div>
-            </div>
-            <nav class="sidebar-nav">
-                <a href="dashboard.html" class="nav-item">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-                    <span>Dashboard</span>
-                </a>
-                <a href="chat.html" class="nav-item active">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                    <span>AI Chat</span>
-                </a>
-            </nav>
-            
-            <div class="premium-history-area">
-                <button class="btn-new-chat-premium" id="btnNewChat">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    New Chat
-                </button>
-                <div class="chat-history-list">
-                    <div class="chat-history-group">Today</div>
-                    <div class="chat-history-item active">Category III AIF Leverage...</div>
-                    <div class="chat-history-group">Previous 7 Days</div>
-                    <div class="chat-history-item">Recent SEBI KYC Regulation...</div>
-                    <div class="chat-history-item">Tax structures in GIFT...</div>
+
+                <nav class="linear-nav">
+                    <a href="dashboard.html" class="linear-nav-item">
+                        Dashboard
+                    </a>
+                    <a href="chat.html" class="linear-nav-item active">
+                        AI Chat
+                    </a>
+                </nav>
+
+                <div class="linear-history">
+                    <button class="linear-btn-new" id="btnNewChat">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        New Chat
+                    </button>
+                    
+                    <div class="linear-history-label">Today</div>
+                    <div class="linear-history-item active">Category III AIF Leverage...</div>
+                    
+                    <div class="linear-history-label">Previous 7 Days</div>
+                    <div class="linear-history-item">Recent SEBI KYC Regulation...</div>
+                    <div class="linear-history-item">Tax structures in GIFT...</div>
                 </div>
             </div>
 
-            <div class="sidebar-footer">
-                <button class="btn-logout-premium" id="btnLogout">
-                    <span>Log Out</span>
-                </button>
-            </div>
+            <button class="linear-btn-logout" id="btnLogout">Log out</button>
         </aside>
 
-        <!-- Main Content -->
-        <main class="main-content premium-main" style="padding: 0; display: flex; flex-direction: column; overflow: hidden; position:relative;">
-            
-            <div class="main-chat-feed premium-feed" id="mainChatFeed">
-                <!-- Welcome State -->
-                <div class="welcome-screen" id="welcomeScreen">
-                    <h2 class="welcome-title">Compliance AI</h2>
-                    <p class="welcome-subtitle">Ask anything about IFSCA, SEBI, or RBI regulations</p>
-                    <div class="welcome-chips">
-                        <button class="welcome-chip" onclick="submitChat('Capital requirements for Category III AIF')">Capital requirements for Category III AIF</button>
-                        <button class="welcome-chip" onclick="submitChat('KYC/AML obligations for GIFT City IBUs')">KYC/AML obligations for GIFT City IBUs</button>
-                        <button class="welcome-chip" onclick="submitChat('SEBI LODR compliance checklist')">SEBI LODR compliance checklist</button>
-                        <button class="welcome-chip" onclick="submitChat('RBI ECB framework for IFSC entities')">RBI ECB framework for IFSC entities</button>
+        <!-- Main Chat Area -->
+        <main class="linear-main">
+            <!-- Scroll area -->
+            <div class="linear-feed" id="mainChatFeed">
+                <!-- Welcome Screen -->
+                <div class="linear-welcome" id="welcomeScreen">
+                    <h1 class="linear-welcome-title">Compliance AI</h1>
+                    <p class="linear-welcome-sub">Trained on IFSCA, SEBI, and RBI regulatory frameworks</p>
+                    <div class="linear-welcome-grid">
+                        <button class="linear-card" onclick="submitChat('Capital requirements for GIFT City AIFs')">Capital requirements for GIFT City AIFs</button>
+                        <button class="linear-card" onclick="submitChat('KYC/AML obligations for IBUs')">KYC/AML obligations for IBUs</button>
+                        <button class="linear-card" onclick="submitChat('SEBI LODR compliance checklist')">SEBI LODR compliance checklist</button>
+                        <button class="linear-card" onclick="submitChat('RBI ECB framework under IFSC')">RBI ECB framework under IFSC</button>
                     </div>
                 </div>
             </div>
 
-            <div class="premium-input-area">
-                <div class="premium-input-container">
+            <!-- Input Area Fixed Bottom -->
+            <div class="linear-input-wrapper">
+                <div class="linear-input-box">
                     <textarea id="fullChatInput" placeholder="Message Compliance AI..." rows="1"></textarea>
-                    <button id="btnFullAskAI" disabled>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    <button class="linear-send-btn" id="btnFullAskAI" disabled>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
                     </button>
                 </div>
-                <div class="premium-input-footer">
-                    AI may produce inaccurate information. Please verify with official publications.
+                <div class="linear-disclaimer">
+                    Compliance AI can make mistakes. Verify critical information with official sources.
                 </div>
             </div>
         </main>
@@ -176,7 +156,7 @@
             window.location.href = 'auth.html';
         });
 
-        // Mobile responsive logic
+        // Mobile sidebar toggle
         const btnHamburger = document.getElementById('btnHamburger');
         const sidebar = document.getElementById('sidebar');
         const sidebarOverlay = document.getElementById('sidebarOverlay');
@@ -209,39 +189,36 @@
             const welcome = document.getElementById('welcomeScreen');
             if (welcome) welcome.style.display = 'none';
 
-            // Reset input
             input.value = '';
             handleInputResize();
             input.disabled = true;
             btnAsk.disabled = true;
 
-            // Render User Bubble
+            // Render User Message directly
             feedContainer.insertAdjacentHTML('beforeend', `
-                <div class="premium-chat-row user fade-up">
-                    <div class="premium-bubble user">
+                <div class="linear-msg user fade-in-up">
+                    <div class="linear-msg-bubble">
                         ${escapeHtml(question).replace(/\\n/g, '<br>')}
                     </div>
                 </div>
             `);
 
+            // Scroll to bottom properly for flex-end approach or standard layout
+            feedContainer.scrollTop = feedContainer.scrollHeight;
+
             const loaderId = 'loader-' + Date.now();
             feedContainer.insertAdjacentHTML('beforeend', `
-                <div id="${loaderId}" class="premium-chat-row ai fade-up">
-                    <div class="ai-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                    </div>
-                    <div class="premium-bubble ai">
-                        <span class="premium-typing"><span></span><span></span><span></span></span>
+                <div id="${loaderId}" class="linear-msg ai fade-in-up">
+                    <div class="linear-ai-avatar">C</div>
+                    <div class="linear-msg-text">
+                        <span class="linear-typing"><span></span><span></span><span></span></span>
                     </div>
                 </div>
             `);
             feedContainer.scrollTop = feedContainer.scrollHeight;
 
             try {
-                const reqBody = {
-                    message: question,
-                    conversationHistory: conversationHistory
-                };
+                const reqBody = { message: question, conversationHistory: conversationHistory };
 
                 const res = await fetch(`${CONFIG.API_BASE}/api/chat`, {
                     method: 'POST',
@@ -249,7 +226,10 @@
                     body: JSON.stringify(reqBody)
                 });
 
-                if (!res.ok) throw new Error("API error");
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.detail || "API error");
+                }
                 const resData = await res.json();
 
                 conversationHistory.push(
@@ -261,23 +241,22 @@
                 if (loader) {
                     const parsedMarkdown = marked.parse(resData.answer);
                     loader.innerHTML = `
-                        <div class="ai-icon">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                        </div>
-                        <div class="premium-bubble ai markdown-body">
+                        <div class="linear-ai-avatar">C</div>
+                        <div class="linear-msg-text markdown-render">
                             ${parsedMarkdown}
                         </div>
                     `;
                 }
             } catch (err) {
                 const loader = document.getElementById(loaderId);
+                const actualError = (err.message && err.message !== "API error") 
+                                     ? "Error: " + err.message 
+                                     : "AI is temporarily unavailable. Please try again later.";
                 if (loader) {
                     loader.innerHTML = `
-                        <div class="ai-icon">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                        </div>
-                        <div class="premium-bubble ai markdown-body" style="color:#ef4444;">
-                            AI is temporarily unavailable. Please try again later.
+                        <div class="linear-ai-avatar" style="background:#ef4444;">!</div>
+                        <div class="linear-msg-text markdown-render" style="color:#ef4444; margin-top: 3px;">
+                            ${escapeHtml(actualError)}
                         </div>
                     `;
                 }
@@ -293,7 +272,10 @@
             conversationHistory = [];
             feedContainer.innerHTML = '';
             const welcome = document.getElementById('welcomeScreen');
-            if (welcome) welcome.style.display = 'flex';
+            if (welcome) {
+                welcome.style.display = 'flex';
+                feedContainer.appendChild(welcome);
+            }
             if (sidebar.classList.contains('mobile-open')) {
                 sidebar.classList.remove('mobile-open');
                 sidebarOverlay.classList.remove('active');
@@ -301,9 +283,7 @@
         });
 
         btnAsk.addEventListener('click', () => submitChat(input.value));
-        
         input.addEventListener('input', handleInputResize);
-        
         input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
