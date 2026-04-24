@@ -10,8 +10,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     
-    <!-- ── Supabase Auth Guard ───────────────────────────── -->
+    <!-- ── Supabase & Parsers ────────────────────────────── -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
         // Replace these with your actual Supabase URL and Anon Key
         const supabaseUrl = 'https://eitutowmqiqxdpbeokcv.supabase.co';
@@ -68,21 +69,25 @@
     </script>
 </head>
 <body>
-    <div id="app">
+    <div id="app" class="premium-chat-app">
+        <!-- Overlay for mobile sidebar -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        
+        <!-- Mobile Header -->
+        <div class="mobile-header">
+            <button class="btn-hamburger" id="btnHamburger">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <div class="mobile-logo">Compliance AI</div>
+            <div style="width:24px;"></div>
+        </div>
+
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar premium-sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
-                    <div class="logo-icon">
-                        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                            <rect width="28" height="28" rx="8" fill="url(#logo-grad)"/>
-                            <path d="M8 14L12 10L16 14L20 10" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M8 18L12 14L16 18L20 14" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
-                            <defs><linearGradient id="logo-grad" x1="0" y1="0" x2="28" y2="28"><stop stop-color="#3B82F6"/><stop offset="1" stop-color="#8B5CF6"/></linearGradient></defs>
-                        </svg>
-                    </div>
                     <div class="logo-text">
-                        <span class="logo-title">Compliance OS</span>
+                        <span class="logo-title" style="font-weight:600;">Compliance OS</span>
                         <span class="logo-subtitle">GIFT City IFSC</span>
                     </div>
                 </div>
@@ -96,68 +101,55 @@
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                     <span>AI Chat</span>
                 </a>
-                <a href="#" class="nav-item" onclick="return false;" style="opacity:0.5; pointer-events:none;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-                    <span>Settings</span>
-                </a>
             </nav>
+            
+            <div class="premium-history-area">
+                <button class="btn-new-chat-premium" id="btnNewChat">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    New Chat
+                </button>
+                <div class="chat-history-list">
+                    <div class="chat-history-group">Today</div>
+                    <div class="chat-history-item active">Category III AIF Leverage...</div>
+                    <div class="chat-history-group">Previous 7 Days</div>
+                    <div class="chat-history-item">Recent SEBI KYC Regulation...</div>
+                    <div class="chat-history-item">Tax structures in GIFT...</div>
+                </div>
+            </div>
+
             <div class="sidebar-footer">
-                <button class="btn btn-outline" id="btnLogout" style="width: 100%;">
+                <button class="btn-logout-premium" id="btnLogout">
                     <span>Log Out</span>
                 </button>
             </div>
         </aside>
 
         <!-- Main Content -->
-        <main class="main-content" style="padding: 0; display: flex; flex-direction: column; overflow: hidden;">
-            <div class="full-chat-wrapper">
-                <!-- Chat Topics Sidebar (Static Mock) -->
-                <div class="chat-history-sidebar">
-                    <div class="chat-history-header">
-                        <button class="btn-new-chat" id="btnNewChat">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                            New Chat
-                        </button>
-                    </div>
-                    <div class="chat-history-list">
-                        <div class="chat-history-group">Today</div>
-                        <div class="chat-history-item active">Category III AIF Leverage Limits</div>
-                        <div class="chat-history-group">Previous 7 Days</div>
-                        <div class="chat-history-item">Recent SEBI KYC Regulations</div>
-                        <div class="chat-history-item">Tax structures in GIFT City</div>
+        <main class="main-content premium-main" style="padding: 0; display: flex; flex-direction: column; overflow: hidden; position:relative;">
+            
+            <div class="main-chat-feed premium-feed" id="mainChatFeed">
+                <!-- Welcome State -->
+                <div class="welcome-screen" id="welcomeScreen">
+                    <h2 class="welcome-title">Compliance AI</h2>
+                    <p class="welcome-subtitle">Ask anything about IFSCA, SEBI, or RBI regulations</p>
+                    <div class="welcome-chips">
+                        <button class="welcome-chip" onclick="submitChat('Capital requirements for Category III AIF')">Capital requirements for Category III AIF</button>
+                        <button class="welcome-chip" onclick="submitChat('KYC/AML obligations for GIFT City IBUs')">KYC/AML obligations for GIFT City IBUs</button>
+                        <button class="welcome-chip" onclick="submitChat('SEBI LODR compliance checklist')">SEBI LODR compliance checklist</button>
+                        <button class="welcome-chip" onclick="submitChat('RBI ECB framework for IFSC entities')">RBI ECB framework for IFSC entities</button>
                     </div>
                 </div>
+            </div>
 
-                <!-- Chat Feed area -->
-                <div class="main-chat-area">
-                    <div class="main-chat-header">
-                        <h2>Compliance AI</h2>
-                        <p>Ask anything about IFSCA, SEBI, or RBI regulations</p>
-                    </div>
-
-                    <div class="main-chat-feed" id="mainChatFeed">
-                        <!-- Initial Greetings -->
-                        <div class="full-chat-bubble ai">
-                            <div class="bubble-avatar ai-avatar">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                            </div>
-                            <div class="bubble-content">
-                                Hello! I'm your Compliance UI Assistant. I have knowledge across GIFT City IFSCA, SEBI, and RBI frameworks. How can I assist you today?
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="main-chat-input-area">
-                        <div class="input-container">
-                            <input type="text" id="fullChatInput" placeholder="Message Compliance AI..." autocomplete="off">
-                            <button id="btnFullAskAI">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                            </button>
-                        </div>
-                        <div class="input-footer">
-                            AI may produce inaccurate information. Please verify with official publications.
-                        </div>
-                    </div>
+            <div class="premium-input-area">
+                <div class="premium-input-container">
+                    <textarea id="fullChatInput" placeholder="Message Compliance AI..." rows="1"></textarea>
+                    <button id="btnFullAskAI" disabled>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    </button>
+                </div>
+                <div class="premium-input-footer">
+                    AI may produce inaccurate information. Please verify with official publications.
                 </div>
             </div>
         </main>
@@ -184,52 +176,62 @@
             window.location.href = 'auth.html';
         });
 
+        // Mobile responsive logic
+        const btnHamburger = document.getElementById('btnHamburger');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        if(btnHamburger) {
+            btnHamburger.addEventListener('click', () => {
+                sidebar.classList.add('mobile-open');
+                sidebarOverlay.classList.add('active');
+            });
+            sidebarOverlay.addEventListener('click', () => {
+                sidebar.classList.remove('mobile-open');
+                sidebarOverlay.classList.remove('active');
+            });
+        }
+
         const input = document.getElementById('fullChatInput');
         const btnAsk = document.getElementById('btnFullAskAI');
         const feedContainer = document.getElementById('mainChatFeed');
         const btnNewChat = document.getElementById('btnNewChat');
 
-        btnNewChat.addEventListener('click', () => {
-            conversationHistory = [];
-            feedContainer.innerHTML = `
-                <div class="full-chat-bubble ai">
-                    <div class="bubble-avatar ai-avatar">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                    </div>
-                    <div class="bubble-content">
-                        Chat cleared. How can I assist you with new regulatory queries?
-                    </div>
-                </div>
-            `;
-        });
+        const handleInputResize = () => {
+            input.style.height = 'auto';
+            input.style.height = (input.scrollHeight) + 'px';
+            btnAsk.disabled = input.value.trim() === '';
+        };
 
-        const submitChat = async (question) => {
+        window.submitChat = async (question) => {
             if (!question.trim()) return;
 
-            // Render User Bubble
-            feedContainer.insertAdjacentHTML('beforeend', `
-                <div class="full-chat-bubble user">
-                    <div class="bubble-avatar user-avatar">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1f2937" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    </div>
-                    <div class="bubble-content">
-                        ${escapeHtml(question)}
-                    </div>
-                </div>
-            `);
-            
+            const welcome = document.getElementById('welcomeScreen');
+            if (welcome) welcome.style.display = 'none';
+
+            // Reset input
             input.value = '';
+            handleInputResize();
             input.disabled = true;
             btnAsk.disabled = true;
 
+            // Render User Bubble
+            feedContainer.insertAdjacentHTML('beforeend', `
+                <div class="premium-chat-row user fade-up">
+                    <div class="premium-bubble user">
+                        ${escapeHtml(question).replace(/\\n/g, '<br>')}
+                    </div>
+                </div>
+            `);
+
             const loaderId = 'loader-' + Date.now();
             feedContainer.insertAdjacentHTML('beforeend', `
-                <div id="${loaderId}" class="full-chat-bubble ai">
-                    <div class="bubble-avatar ai-avatar">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <div id="${loaderId}" class="premium-chat-row ai fade-up">
+                    <div class="ai-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                     </div>
-                    <div class="bubble-content">
-                        <span class="typing-indicator"><span></span><span></span><span></span></span>
+                    <div class="premium-bubble ai">
+                        <span class="premium-typing"><span></span><span></span><span></span></span>
                     </div>
                 </div>
             `);
@@ -257,42 +259,57 @@
 
                 const loader = document.getElementById(loaderId);
                 if (loader) {
-                    loader.outerHTML = `
-                        <div class="full-chat-bubble ai">
-                            <div class="bubble-avatar ai-avatar">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                            </div>
-                            <div class="bubble-content">
-                                ${escapeHtml(resData.answer).replace(/\\n/g, '<br>')}
-                            </div>
+                    const parsedMarkdown = marked.parse(resData.answer);
+                    loader.innerHTML = `
+                        <div class="ai-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        </div>
+                        <div class="premium-bubble ai markdown-body">
+                            ${parsedMarkdown}
                         </div>
                     `;
                 }
             } catch (err) {
                 const loader = document.getElementById(loaderId);
                 if (loader) {
-                    loader.outerHTML = `
-                        <div class="full-chat-bubble ai" style="color:#EF4444;">
-                            <div class="bubble-avatar ai-avatar" style="background:#EF4444;">!</div>
-                            <div class="bubble-content">
-                                AI is temporarily unavailable. Please try again later.
-                            </div>
+                    loader.innerHTML = `
+                        <div class="ai-icon">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        </div>
+                        <div class="premium-bubble ai markdown-body" style="color:#ef4444;">
+                            AI is temporarily unavailable. Please try again later.
                         </div>
                     `;
                 }
             } finally {
                 input.disabled = false;
-                btnAsk.disabled = false;
+                handleInputResize();
                 input.focus();
                 feedContainer.scrollTop = feedContainer.scrollHeight;
             }
         };
 
-        btnAsk.addEventListener('click', () => submitChat(input.value));
-        input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') submitChat(input.value);
+        btnNewChat.addEventListener('click', () => {
+            conversationHistory = [];
+            feedContainer.innerHTML = '';
+            const welcome = document.getElementById('welcomeScreen');
+            if (welcome) welcome.style.display = 'flex';
+            if (sidebar.classList.contains('mobile-open')) {
+                sidebar.classList.remove('mobile-open');
+                sidebarOverlay.classList.remove('active');
+            }
         });
 
+        btnAsk.addEventListener('click', () => submitChat(input.value));
+        
+        input.addEventListener('input', handleInputResize);
+        
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                submitChat(input.value);
+            }
+        });
     </script>
 </body>
 </html>
