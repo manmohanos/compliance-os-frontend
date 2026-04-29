@@ -190,12 +190,25 @@ h1, h2, h3 {
     font-weight: 600;
     color: var(--text-primary);
     display: block;
+    word-break: break-all;
 }
 
 .user-role {
     font-size: 11px;
     color: var(--text-muted);
     display: block;
+}
+
+.sidebar-logout-link {
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-top: 2px;
+    display: inline-block;
+    text-decoration: none;
+}
+
+.sidebar-logout-link:hover {
+    color: var(--text-secondary);
 }
 
 /* ── Main Content ─────────────────────────────────────── */
@@ -935,6 +948,14 @@ h1, h2, h3 {
     0% { opacity: 0.5; }
     50% { opacity: 1; }
     100% { opacity: 0.5; }
+}
+
+/* ── Dashboard: Empty State ──────────────────────────── */
+
+.empty-detail__hint {
+    margin-top: 16px;
+    color: var(--text-muted);
+    font-size: 14px;
 }
 
 /* ── Phase 2E: Linear / Claude Ultra-Premium Redesign ── */
