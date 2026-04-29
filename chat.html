@@ -15,40 +15,51 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
-        const supabaseUrl = 'https://eitutowmqiqxdpbeokcv.supabase.co';
-        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdHV0b3dtcWlxeGRwYmVva2N2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0MjEyNTUsImV4cCI6MjA5MTk5NzI1NX0.EDvtrRUJGDZavcpSIXpR9Bc5ZXxHnCsD3SUqtJv-D2M';
-        
+        // ── Credentials — single source of truth is app.js CONFIG.
+        // This block mirrors those values for the blocking auth guard
+        // which must run before app.js is loaded.
+        const CHAT_CONFIG = {
+            SUPABASE_URL: 'https://eitutowmqiqxdpbeokcv.supabase.co',
+            SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdHV0b3dtcWlxeGRwYmVva2N2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0MjEyNTUsImV4cCI6MjA5MTk5NzI1NX0.EDvtrRUJGDZavcpSIXpR9Bc5ZXxHnCsD3SUqtJv-D2M',
+        };
+
         const cookieStorage = {
             getItem: (key) => {
-                const name = key + "=";
+                const name = key + '=';
                 const ca = decodeURIComponent(document.cookie).split(';');
-                for(let i = 0; i <ca.length; i++) {
-                    let c = ca[i].trim();
+                for (let i = 0; i < ca.length; i++) {
+                    const c = ca[i].trim();
                     if (c.indexOf(name) === 0) return c.substring(name.length, c.length);
                 }
                 return null;
             },
             setItem: (key, value) => {
-                const d = new Date(); d.setTime(d.getTime() + (7*24*60*60*1000));
-                document.cookie = key + "=" + value + ";expires=" + d.toUTCString() + ";path=/;SameSite=Lax";
+                const d = new Date();
+                d.setTime(d.getTime() + (7 * 24 * 60 * 60 * 1000));
+                document.cookie = key + '=' + value + ';expires=' + d.toUTCString() + ';path=/;SameSite=Lax';
             },
             removeItem: (key) => {
-                document.cookie = key + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-            }
+                document.cookie = key + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
+            },
         };
+
         const { createClient } = supabase;
-        const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
-            auth: { storage: cookieStorage, autoRefreshToken: true, persistSession: true, detectSessionInUrl: false }
+        const supabaseClient = createClient(CHAT_CONFIG.SUPABASE_URL, CHAT_CONFIG.SUPABASE_ANON_KEY, {
+            auth: { storage: cookieStorage, autoRefreshToken: true, persistSession: true, detectSessionInUrl: false },
         });
         window.supabaseInstance = supabaseClient;
 
         (async function checkAuth() {
             try {
                 const { data: { session } } = await supabaseClient.auth.getSession();
-                if (!session) { window.location.replace('auth.html'); }
-                else { window.USER_EMAIL = session.user.email; window.USER_TOKEN = session.access_token; }
+                if (!session) {
+                    window.location.replace('auth.html');
+                } else {
+                    window.USER_EMAIL = session.user.email;
+                    window.USER_TOKEN = session.access_token;
+                }
             } catch (err) {
-                console.error("Auth error:", err);
+                console.error('Auth error:', err);
                 window.location.replace('auth.html');
             }
         })();
@@ -65,7 +76,7 @@
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
             </button>
             <div class="mobile-logo-text">Compliance AI</div>
-            <div style="width:20px;"></div>
+            <div class="mobile-header-spacer"></div>
         </div>
 
         <!-- Sidebar -->

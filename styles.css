@@ -1320,6 +1320,7 @@ body {
     display: flex;
 }
 .mobile-logo-text { font-size: 13px; font-weight: 600; color: #f0f0f0; }
+.mobile-header-spacer { width: 20px; flex-shrink: 0; }
 
 @media (max-width: 768px) {
     .linear-layout { flex-direction: column; }

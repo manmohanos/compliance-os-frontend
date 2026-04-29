@@ -8,6 +8,8 @@
 //   https://giftcity-compliance-api.onrender.com
 const CONFIG = {
     API_BASE: 'https://giftcity-compliance-api.onrender.com',
+    SUPABASE_URL: 'https://eitutowmqiqxdpbeokcv.supabase.co',
+    SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdHV0b3dtcWlxeGRwYmVva2N2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0MjEyNTUsImV4cCI6MjA5MTk5NzI1NX0.EDvtrRUJGDZavcpSIXpR9Bc5ZXxHnCsD3SUqtJv-D2M',
 };
 
 // ── Cold Start Handler ──────────────────────────────────
