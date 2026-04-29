@@ -44,6 +44,11 @@
 
     /* Transitions */
     --transition: 0.2s ease;
+
+    /* Typography */
+    --font-display: 'Geist', 'Inter', -apple-system, sans-serif;
+    --font-body:    'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono:    'JetBrains Mono', 'Fira Code', monospace;
 }
 
 * {
@@ -53,11 +58,17 @@
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: var(--font-body);
     background: var(--bg-primary);
     color: var(--text-primary);
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    line-height: 1.2;
 }
 
 #app {
