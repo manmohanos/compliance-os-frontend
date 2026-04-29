@@ -19,9 +19,13 @@
     --border: #1E293B;
     --border-light: #334155;
 
-    --accent-blue: #3B82F6;
-    --accent-purple: #8B5CF6;
-    --accent-gradient: linear-gradient(135deg, #3B82F6, #8B5CF6);
+    --accent-blue: #00D4AA;
+    --accent-purple: #00b894;
+    --accent-gradient: linear-gradient(135deg, #00D4AA, #00b894);
+
+    --color-accent: #00D4AA;
+    --color-accent-hover: #00b894;
+    --color-accent-muted: rgba(0, 212, 170, 0.12);
 
     --severity-critical-bg: rgba(239, 68, 68, 0.12);
     --severity-critical-text: #EF4444;
@@ -988,8 +992,8 @@ body {
 }
 .linear-nav-item.active {
     color: #f0f0f0;
-    background: rgba(99,102,241,0.12);
-    border-left: 2px solid #6366f1;
+    background: var(--color-accent-muted);
+    border-left: 2px solid var(--color-accent);
     border-radius: 0 8px 8px 0; /* flat left edge for border */
 }
 
@@ -1096,7 +1100,7 @@ body {
     font-size: 32px;
     font-weight: 300;
     margin: 0 0 12px 0;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    background: linear-gradient(135deg, var(--color-accent), var(--color-accent-hover));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -1161,7 +1165,7 @@ body {
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    background: var(--color-accent);
     color: #fff;
     font-size: 11px;
     font-weight: 600;
@@ -1270,12 +1274,12 @@ body {
     transition: all 0.15s ease;
 }
 .linear-send-btn:not(:disabled) {
-    background: #6366f1;
-    color: white;
+    background: var(--color-accent);
+    color: #0a0a0a;
     cursor: pointer;
 }
 .linear-send-btn:not(:disabled):hover {
-    background: #5254cc;
+    background: var(--color-accent-hover);
 }
 .linear-send-btn:not(:disabled):active {
     transform: scale(0.95);
