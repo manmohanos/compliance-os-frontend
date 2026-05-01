@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compliance OS — Audit Log</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Inter:wght@300..600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        const supabaseUrl = 'https://eitutowmqiqxdpbeokcv.supabase.co';
+        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdHV0b3dtcWlxeGRwYmVva2N2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0MjEyNTUsImV4cCI6MjA5MTk5NzI1NX0.EDvtrRUJGDZavcpSIXpR9Bc5ZXxHnCsD3SUqtJv-D2M';
+        const cookieStorage = {
+            getItem: (k) => { const n = k + "="; const ca = decodeURIComponent(document.cookie).split(';'); for (const x of ca) { const c = x.trim(); if (c.indexOf(n) === 0) return c.substring(n.length); } return null; },
+            setItem: (k, v) => { const d = new Date(); d.setTime(d.getTime() + 7 * 86400000); document.cookie = `${k}=${v};expires=${d.toUTCString()};path=/;SameSite=Lax`; },
+            removeItem: (k) => { document.cookie = `${k}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`; },
+        };
+        const { createClient } = supabase;
+        const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+            auth: { storage: cookieStorage, autoRefreshToken: true, persistSession: true, detectSessionInUrl: false },
+        });
+        window.supabaseInstance = supabaseClient;
+        (async function checkAuth() {
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session) { window.location.replace('auth.html'); return; }
+                window.USER_EMAIL = session.user.email;
+                window.USER_ID = session.user.id;
+            } catch (err) { window.location.replace('auth.html'); }
+        })();
+    </script>
+</head>
+<body class="linear-body">
+    <div id="app" class="linear-layout">
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <div class="linear-mobile-header">
+            <button class="linear-hamburger" id="btnHamburger">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <div class="mobile-logo-text">Audit</div>
+        </div>
+
+        <aside class="linear-sidebar" id="sidebar">
+            <div class="linear-sidebar-top">
+                <div class="linear-logo">
+                    <div class="linear-logo-title">Compliance OS</div>
+                    <div class="linear-logo-sub">GIFT City IFSC</div>
+                </div>
+                <nav class="linear-nav">
+                    <a href="briefing.html" class="linear-nav-item">Briefing</a>
+                    <a href="dashboard.html" class="linear-nav-item">Feed</a>
+                    <a href="chat.html" class="linear-nav-item">AI Chat</a>
+                    <a href="calendar.html" class="linear-nav-item">Calendar</a>
+                    <a href="audit.html" class="linear-nav-item active">Audit Log</a>
+                </nav>
+            </div>
+            <button class="linear-btn-logout" id="btnLogout">Log out</button>
+        </aside>
+
+        <main class="linear-main audit-main">
+            <div class="audit-scroll">
+                <header class="audit-hero">
+                    <div>
+                        <div class="audit-eyebrow">Tamper-evident record</div>
+                        <h1 class="brief-h1">Audit Log</h1>
+                        <p class="audit-sub">Every saved AI answer, acknowledged circular, and filing event — recorded with model version and timestamp. Hash-chain integrity verification is week-2 work.</p>
+                    </div>
+                    <div class="audit-actions">
+                        <button class="audit-btn" id="btnExport">Export JSON</button>
+                    </div>
+                </header>
+
+                <section class="audit-tabs">
+                    <button class="audit-tab active" data-tab="saved">Saved Q&amp;A</button>
+                    <button class="audit-tab" data-tab="log">Event Log</button>
+                </section>
+
+                <section class="audit-pane" id="paneSaved">
+                    <div class="audit-list" id="savedList">
+                        <div class="audit-empty">Loading…</div>
+                    </div>
+                </section>
+
+                <section class="audit-pane" id="paneLog" hidden>
+                    <div class="audit-list" id="logList">
+                        <div class="audit-empty">Loading…</div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Detail drawer -->
+            <aside class="source-drawer audit-drawer" id="auditDrawer">
+                <div class="source-drawer-head">
+                    <div class="source-drawer-title" id="auditDrawerTitle">Saved Q&amp;A</div>
+                    <button class="source-drawer-close" id="btnCloseAuditDrawer">×</button>
+                </div>
+                <div class="source-drawer-meta" id="auditDrawerMeta"></div>
+                <div class="source-drawer-body" id="auditDrawerBody"></div>
+            </aside>
+        </main>
+    </div>
+
+    <script>
+        const CONFIG = {
+            API_BASE: (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                ? 'http://localhost:8000'
+                : 'https://giftcity-compliance-api.onrender.com',
+        };
+
+        function escapeHtml(t) { if (!t) return ''; const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+        function formatDate(s) {
+            if (!s) return '';
+            try {
+                const d = new Date(s);
+                return d.toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            } catch { return s; }
+        }
+
+        let savedItems = [];
+        let logItems = [];
+
+        async function loadSaved() {
+            const list = document.getElementById('savedList');
+            try {
+                const res = await fetch(`${CONFIG.API_BASE}/api/audit/list?user_id=${encodeURIComponent(window.USER_ID)}&limit=200`);
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    list.innerHTML = `<div class="audit-empty">${escapeHtml(err.detail || 'Cannot load saved Q&A.')}</div>`;
+                    return;
+                }
+                const data = await res.json();
+                savedItems = data.items || [];
+                if (!savedItems.length) {
+                    list.innerHTML = `
+                        <div class="audit-empty">
+                            <p>No saved Q&amp;A yet.</p>
+                            <p class="audit-empty-sub">Save an answer from the AI Chat to see it here, with model version + sources locked in.</p>
+                            <a class="audit-btn" href="chat.html">Open AI Chat →</a>
+                        </div>`;
+                    return;
+                }
+                list.innerHTML = savedItems.map((it, i) => {
+                    const p = it.payload || {};
+                    const sourcesCount = (p.used_sources || p.citations || []).length;
+                    return `
+                        <button class="audit-row" data-idx="${i}">
+                            <div class="audit-row-main">
+                                <div class="audit-row-title">${escapeHtml(it.title || (p.question || '').slice(0, 80) || 'Untitled')}</div>
+                                <div class="audit-row-meta">
+                                    <span>${escapeHtml(it.purpose || 'internal')}</span>
+                                    <span>·</span>
+                                    <span>${formatDate(it.created_at)}</span>
+                                    <span>·</span>
+                                    <span>${sourcesCount} source${sourcesCount === 1 ? '' : 's'}</span>
+                                    ${p.model_id ? `<span>·</span><span class="mono">${escapeHtml(p.model_id)}</span>` : ''}
+                                </div>
+                            </div>
+                        </button>`;
+                }).join('');
+
+                list.querySelectorAll('.audit-row').forEach(row => {
+                    row.addEventListener('click', () => openDetail(savedItems[+row.dataset.idx]));
+                });
+
+                // Auto-open if URL has ?artifact=
+                const params = new URLSearchParams(location.search);
+                const which = params.get('artifact');
+                if (which) {
+                    const found = savedItems.find(x => x.id === which);
+                    if (found) openDetail(found);
+                }
+            } catch (e) {
+                list.innerHTML = `<div class="audit-empty">Failed to load: ${escapeHtml(e.message)}</div>`;
+            }
+        }
+
+        async function loadLog() {
+            const list = document.getElementById('logList');
+            try {
+                const res = await fetch(`${CONFIG.API_BASE}/api/audit/log?user_id=${encodeURIComponent(window.USER_ID)}&limit=300`);
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    list.innerHTML = `<div class="audit-empty">${escapeHtml(err.detail || 'Cannot load event log.')}</div>`;
+                    return;
+                }
+                const data = await res.json();
+                logItems = data.items || [];
+                if (!logItems.length) {
+                    list.innerHTML = `<div class="audit-empty">No events yet. Acknowledge a circular or save a Q&amp;A to populate this log.</div>`;
+                    return;
+                }
+                list.innerHTML = logItems.map(it => `
+                    <div class="audit-row audit-row--readonly">
+                        <div class="audit-row-main">
+                            <div class="audit-row-title">
+                                <span class="evt-tag evt-${escapeHtml(it.event_type)}">${escapeHtml(it.event_type)}</span>
+                                ${escapeHtml((it.payload && (it.payload.title || it.payload.question)) ? (it.payload.title || it.payload.question).slice(0, 80) : '')}
+                            </div>
+                            <div class="audit-row-meta">
+                                <span>${formatDate(it.occurred_at)}</span>
+                                ${it.model_id ? `<span>·</span><span class="mono">${escapeHtml(it.model_id)}</span>` : ''}
+                                ${it.entity_type ? `<span>·</span><span>${escapeHtml(it.entity_type)}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                list.innerHTML = `<div class="audit-empty">Failed to load: ${escapeHtml(e.message)}</div>`;
+            }
+        }
+
+        function openDetail(item) {
+            const p = item.payload || {};
+            const drawer = document.getElementById('auditDrawer');
+            document.getElementById('auditDrawerTitle').textContent = item.title || 'Saved Q&A';
+            document.getElementById('auditDrawerMeta').innerHTML = `
+                <div class="source-meta-row"><span class="lbl">Purpose</span><span class="val">${escapeHtml(item.purpose || 'internal')}</span></div>
+                <div class="source-meta-row"><span class="lbl">Saved</span><span class="val">${formatDate(item.created_at)}</span></div>
+                ${p.model_id ? `<div class="source-meta-row"><span class="lbl">Model</span><span class="val mono">${escapeHtml(p.model_id)}</span></div>` : ''}
+                ${typeof p.is_grounded === 'boolean' ? `<div class="source-meta-row"><span class="lbl">Grounded</span><span class="val">${p.is_grounded ? 'yes' : 'no'}</span></div>` : ''}
+            `;
+
+            const sources = p.used_sources || [];
+            const sourcesHtml = sources.length
+                ? `<div class="src-list">${sources.map((s, i) => `
+                    <div class="src-row src-row--readonly">
+                        <span class="src-row-idx">${i + 1}</span>
+                        <span class="src-row-no">${escapeHtml(s.circular_number || 'N/A')}</span>
+                        <span class="src-row-sec">${escapeHtml((s.section_path || []).join(' > ') || s.cited_section_path || 'Document')}</span>
+                    </div>`).join('')}</div>`
+                : '<div class="audit-empty">No sources captured.</div>';
+
+            const answerHtml = marked.parse(p.answer || '_(empty)_');
+            const cleanedAnswerHtml = answerHtml.replace(/\[§([^\]]+?)::([^\]]+?)\]/g, (_full, no, sec) => {
+                return `<span class="cite-chip cite-chip--readonly" title="${escapeHtml(no)} · ${escapeHtml(sec)}">[${escapeHtml(no.slice(0, 14))}]</span>`;
+            });
+
+            document.getElementById('auditDrawerBody').innerHTML = `
+                <div class="audit-q"><span class="lbl">Q.</span> ${escapeHtml(p.question || '')}</div>
+                <div class="markdown-render audit-a">${cleanedAnswerHtml}</div>
+                <div class="audit-sources-head">Sources cited</div>
+                ${sourcesHtml}
+            `;
+            drawer.classList.add('open');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('btnLogout').addEventListener('click', async () => {
+                await window.supabaseInstance.auth.signOut();
+                window.location.replace('auth.html');
+            });
+
+            const btnHamburger = document.getElementById('btnHamburger');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            if (btnHamburger) {
+                btnHamburger.addEventListener('click', () => { sidebar.classList.add('mobile-open'); sidebarOverlay.classList.add('active'); });
+                sidebarOverlay.addEventListener('click', () => { sidebar.classList.remove('mobile-open'); sidebarOverlay.classList.remove('active'); });
+            }
+
+            document.getElementById('btnCloseAuditDrawer').addEventListener('click', () => {
+                document.getElementById('auditDrawer').classList.remove('open');
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') document.getElementById('auditDrawer').classList.remove('open');
+            });
+
+            // Tab switching
+            document.querySelectorAll('.audit-tab').forEach(t => {
+                t.addEventListener('click', () => {
+                    document.querySelectorAll('.audit-tab').forEach(x => x.classList.remove('active'));
+                    t.classList.add('active');
+                    const which = t.dataset.tab;
+                    document.getElementById('paneSaved').hidden = which !== 'saved';
+                    document.getElementById('paneLog').hidden = which !== 'log';
+                    if (which === 'log' && !logItems.length) loadLog();
+                });
+            });
+
+            // Export
+            document.getElementById('btnExport').addEventListener('click', () => {
+                const payload = { saved: savedItems, log: logItems, exported_at: new Date().toISOString() };
+                const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = `audit-pack-${Date.now()}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+            });
+
+            loadSaved();
+        });
+    </script>
+</body>
+</html>

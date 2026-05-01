@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compliance OS — Morning Briefing</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Inter:wght@300..600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const supabaseUrl = 'https://eitutowmqiqxdpbeokcv.supabase.co';
+        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdHV0b3dtcWlxeGRwYmVva2N2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0MjEyNTUsImV4cCI6MjA5MTk5NzI1NX0.EDvtrRUJGDZavcpSIXpR9Bc5ZXxHnCsD3SUqtJv-D2M';
+        const cookieStorage = {
+            getItem: (key) => {
+                const name = key + "=";
+                const ca = decodeURIComponent(document.cookie).split(';');
+                for (let i = 0; i < ca.length; i++) { let c = ca[i].trim(); if (c.indexOf(name) === 0) return c.substring(name.length, c.length); }
+                return null;
+            },
+            setItem: (key, value) => {
+                const d = new Date(); d.setTime(d.getTime() + (7 * 24 * 60 * 60 * 1000));
+                document.cookie = key + "=" + value + ";expires=" + d.toUTCString() + ";path=/;SameSite=Lax";
+            },
+            removeItem: (key) => { document.cookie = key + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"; },
+        };
+        const { createClient } = supabase;
+        const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+            auth: { storage: cookieStorage, autoRefreshToken: true, persistSession: true, detectSessionInUrl: false },
+        });
+        window.supabaseInstance = supabaseClient;
+        (async function checkAuth() {
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session) { window.location.replace('auth.html'); return; }
+                window.USER_EMAIL = session.user.email;
+                window.USER_ID = session.user.id;
+                window.USER_TOKEN = session.access_token;
+            } catch (err) {
+                console.error("Auth error:", err);
+                window.location.replace('auth.html');
+            }
+        })();
+    </script>
+</head>
+<body class="linear-body">
+    <div id="app" class="linear-layout">
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <div class="linear-mobile-header">
+            <button class="linear-hamburger" id="btnHamburger">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <div class="mobile-logo-text">Briefing</div>
+            <div class="mobile-header-spacer"></div>
+        </div>
+
+        <aside class="linear-sidebar" id="sidebar">
+            <div class="linear-sidebar-top">
+                <div class="linear-logo">
+                    <div class="linear-logo-title">Compliance OS</div>
+                    <div class="linear-logo-sub">GIFT City IFSC</div>
+                </div>
+                <nav class="linear-nav">
+                    <a href="briefing.html" class="linear-nav-item active">Briefing</a>
+                    <a href="dashboard.html" class="linear-nav-item">Feed</a>
+                    <a href="chat.html" class="linear-nav-item">AI Chat</a>
+                    <a href="calendar.html" class="linear-nav-item">Calendar</a>
+                    <a href="audit.html" class="linear-nav-item">Audit Log</a>
+                </nav>
+                <div class="linear-history">
+                    <div class="linear-history-label">Account</div>
+                    <div class="linear-recent-empty" id="userEmailDisplay">…</div>
+                </div>
+            </div>
+            <button class="linear-btn-logout" id="btnLogout">Log out</button>
+        </aside>
+
+        <main class="linear-main briefing-main">
+            <div class="briefing-scroll">
+                <!-- Top strip: greeting + score + FY context -->
+                <header class="brief-hero">
+                    <div class="brief-hero-left">
+                        <div class="brief-greeting" id="briefGreeting">Good morning.</div>
+                        <h1 class="brief-h1">Your morning briefing</h1>
+                        <div class="brief-fy">
+                            <span id="fyBadge">Q1 FY27</span>
+                            <span class="dot"></span>
+                            <span id="briefDate">Loading…</span>
+                            <span class="dot"></span>
+                            <span id="briefRefreshed">Last refreshed just now</span>
+                        </div>
+                    </div>
+                    <div class="brief-hero-right">
+                        <div class="health-tile" id="healthTile" title="Compliance Health Score">
+                            <div class="health-score" id="healthScore">—</div>
+                            <div class="health-label">Health Score</div>
+                            <div class="health-trend" id="healthTrend">computing…</div>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Widget grid -->
+                <section class="brief-grid">
+                    <a href="dashboard.html?since=24h" class="widget widget--accent">
+                        <div class="widget-head">
+                            <div class="widget-title">New since you last logged in</div>
+                            <div class="widget-arrow">→</div>
+                        </div>
+                        <div class="widget-big" id="wNew">—</div>
+                        <div class="widget-sub" id="wNewSub">circulars indexed</div>
+                    </a>
+
+                    <a href="dashboard.html?severity=critical" class="widget widget--critical">
+                        <div class="widget-head">
+                            <div class="widget-title">Critical, unacknowledged</div>
+                            <div class="widget-arrow">→</div>
+                        </div>
+                        <div class="widget-big" id="wCritical">—</div>
+                        <div class="widget-sub">circulars need your review</div>
+                    </a>
+
+                    <a href="calendar.html" class="widget">
+                        <div class="widget-head">
+                            <div class="widget-title">This week's deadlines</div>
+                            <div class="widget-arrow">→</div>
+                        </div>
+                        <div class="widget-list" id="wDeadlines">
+                            <div class="widget-list-row"><span class="dl-pill dl-warn">T-3</span><span class="dl-name">Quarterly Compliance Report</span></div>
+                            <div class="widget-list-row"><span class="dl-pill dl-ok">T-14</span><span class="dl-name">FATCA-CRS Submission</span></div>
+                            <div class="widget-list-row"><span class="dl-pill dl-ok">T-22</span><span class="dl-name">AML Risk Assessment</span></div>
+                        </div>
+                    </a>
+
+                    <a href="chat.html" class="widget widget--ai">
+                        <div class="widget-head">
+                            <div class="widget-title">Ask AI</div>
+                            <div class="widget-arrow">→</div>
+                        </div>
+                        <div class="widget-prompt-row">
+                            <input id="quickAsk" class="quick-ask" placeholder="What is the leverage cap for Cat III AIF?" />
+                            <button id="quickAskBtn" class="quick-ask-btn">Ask</button>
+                        </div>
+                        <div class="widget-sub">Citation-backed, sourced from your circulars.</div>
+                    </a>
+
+                    <a href="audit.html" class="widget">
+                        <div class="widget-head">
+                            <div class="widget-title">Recent saved Q&amp;A</div>
+                            <div class="widget-arrow">→</div>
+                        </div>
+                        <div class="widget-list" id="wSaved">
+                            <div class="widget-list-row widget-empty">No saved answers yet.</div>
+                        </div>
+                    </a>
+
+                    <div class="widget widget--readonly">
+                        <div class="widget-head">
+                            <div class="widget-title">Your entity</div>
+                        </div>
+                        <div class="widget-list">
+                            <div class="widget-list-row"><span class="lbl">Entity class</span><span class="val">FME (Registered, Non-Retail)</span></div>
+                            <div class="widget-list-row"><span class="lbl">Regulator</span><span class="val">IFSCA + MoF</span></div>
+                            <div class="widget-list-row"><span class="lbl">FY end</span><span class="val">31 Mar</span></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Footer strip -->
+                <section class="brief-foot">
+                    <div class="brief-foot-meta">
+                        v1.1 MVP · grounded in <span id="footTotalCirculars">…</span> IFSCA circulars
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const CONFIG = {
+            API_BASE: (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                ? 'http://localhost:8000'
+                : 'https://giftcity-compliance-api.onrender.com',
+        };
+
+        function fmtDate(d) {
+            return d.toLocaleDateString('en-IN', { weekday: 'long', day: '2-digit', month: 'short', year: 'numeric' });
+        }
+
+        function fyQuarter(date) {
+            // Indian FY: April → March
+            const m = date.getMonth(); // 0-indexed
+            const y = date.getFullYear();
+            let q;
+            if (m >= 3 && m <= 5) q = 1;          // Apr–Jun
+            else if (m >= 6 && m <= 8) q = 2;     // Jul–Sep
+            else if (m >= 9 && m <= 11) q = 3;    // Oct–Dec
+            else q = 4;                            // Jan–Mar
+            const fyStart = (m >= 3) ? y : y - 1;
+            const fyEnd = (fyStart + 1).toString().slice(-2);
+            return `Q${q} FY${fyEnd}`;
+        }
+
+        function greetingFor(d) {
+            const h = d.getHours();
+            if (h < 12) return 'Good morning.';
+            if (h < 17) return 'Good afternoon.';
+            return 'Good evening.';
+        }
+
+        function computeHealthScore(stats) {
+            // Heuristic for MVP: penalize unprocessed + critical-recent
+            const total = stats.total_circulars || 0;
+            const critical = stats.severity_breakdown?.critical || 0;
+            const unprocessed = stats.unprocessed || 0;
+            const score = Math.max(0, 100 - (critical * 4) - Math.min(20, Math.floor(unprocessed / 20)));
+            return Math.min(100, score);
+        }
+
+        async function loadStats() {
+            try {
+                const res = await fetch(`${CONFIG.API_BASE}/api/stats`);
+                if (!res.ok) throw new Error('stats failed');
+                const stats = await res.json();
+                const score = computeHealthScore(stats);
+                document.getElementById('healthScore').textContent = score;
+                document.getElementById('healthTrend').textContent = score >= 85 ? 'on track' : (score >= 60 ? 'attention needed' : 'urgent');
+                document.getElementById('healthTile').dataset.tier =
+                    score >= 85 ? 'good' : (score >= 60 ? 'warn' : 'bad');
+
+                document.getElementById('wNew').textContent = stats.recent_7_days ?? 0;
+                document.getElementById('wNewSub').textContent = `circulars in last 7 days`;
+                document.getElementById('wCritical').textContent = stats.severity_breakdown?.critical ?? 0;
+                document.getElementById('footTotalCirculars').textContent = stats.total_circulars ?? '—';
+            } catch (e) {
+                document.getElementById('healthScore').textContent = '—';
+                document.getElementById('healthTrend').textContent = 'offline';
+            }
+        }
+
+        async function loadRecentSaved() {
+            const list = document.getElementById('wSaved');
+            if (!window.USER_ID) return;
+            try {
+                const res = await fetch(`${CONFIG.API_BASE}/api/audit/list?user_id=${encodeURIComponent(window.USER_ID)}&limit=4`);
+                if (!res.ok) return;
+                const data = await res.json();
+                const items = data.items || [];
+                if (!items.length) {
+                    list.innerHTML = '<div class="widget-list-row widget-empty">No saved answers yet.</div>';
+                    return;
+                }
+                list.innerHTML = items.map(i => `
+                    <div class="widget-list-row">
+                        <span class="lbl">·</span>
+                        <span class="val val--clip">${escapeHtml(i.title || 'Untitled')}</span>
+                    </div>
+                `).join('');
+            } catch {}
+        }
+
+        function escapeHtml(t) {
+            if (!t) return '';
+            const d = document.createElement('div'); d.textContent = t; return d.innerHTML;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
+            document.getElementById('briefGreeting').textContent = greetingFor(now);
+            document.getElementById('briefDate').textContent = fmtDate(now);
+            document.getElementById('fyBadge').textContent = fyQuarter(now);
+            const userEmail = window.USER_EMAIL || '';
+            document.getElementById('userEmailDisplay').textContent = userEmail;
+
+            document.getElementById('btnLogout').addEventListener('click', async () => {
+                await window.supabaseInstance.auth.signOut();
+                window.location.replace('auth.html');
+            });
+
+            const btnHamburger = document.getElementById('btnHamburger');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            if (btnHamburger) {
+                btnHamburger.addEventListener('click', () => {
+                    sidebar.classList.add('mobile-open');
+                    sidebarOverlay.classList.add('active');
+                });
+                sidebarOverlay.addEventListener('click', () => {
+                    sidebar.classList.remove('mobile-open');
+                    sidebarOverlay.classList.remove('active');
+                });
+            }
+
+            document.getElementById('quickAskBtn').addEventListener('click', () => {
+                const q = document.getElementById('quickAsk').value.trim();
+                if (!q) { window.location.href = 'chat.html'; return; }
+                window.location.href = `chat.html?q=${encodeURIComponent(q)}`;
+            });
+            document.getElementById('quickAsk').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') document.getElementById('quickAskBtn').click();
+            });
+
+            loadStats();
+            loadRecentSaved();
+        });
+    </script>
+</body>
+</html>

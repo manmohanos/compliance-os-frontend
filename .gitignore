@@ -1,0 +1,18 @@
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# Local env
+.env
+.env.local
+
+# Logs
+*.log
+
+# Build artefacts (none yet — frontend is vanilla)
+node_modules/
+dist/
+build/

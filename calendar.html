@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compliance OS — Calendar</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Inter:wght@300..600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const supabaseUrl = 'https://eitutowmqiqxdpbeokcv.supabase.co';
+        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdHV0b3dtcWlxeGRwYmVva2N2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0MjEyNTUsImV4cCI6MjA5MTk5NzI1NX0.EDvtrRUJGDZavcpSIXpR9Bc5ZXxHnCsD3SUqtJv-D2M';
+        const cookieStorage = {
+            getItem: (k) => { const n = k + "="; const ca = decodeURIComponent(document.cookie).split(';'); for (const x of ca) { const c = x.trim(); if (c.indexOf(n) === 0) return c.substring(n.length); } return null; },
+            setItem: (k, v) => { const d = new Date(); d.setTime(d.getTime() + 7 * 86400000); document.cookie = `${k}=${v};expires=${d.toUTCString()};path=/;SameSite=Lax`; },
+            removeItem: (k) => { document.cookie = `${k}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`; },
+        };
+        const { createClient } = supabase;
+        const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+            auth: { storage: cookieStorage, autoRefreshToken: true, persistSession: true, detectSessionInUrl: false },
+        });
+        window.supabaseInstance = supabaseClient;
+        (async function checkAuth() {
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (!session) { window.location.replace('auth.html'); return; }
+                window.USER_EMAIL = session.user.email;
+                window.USER_ID = session.user.id;
+            } catch (err) { window.location.replace('auth.html'); }
+        })();
+    </script>
+</head>
+<body class="linear-body">
+    <div id="app" class="linear-layout">
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <div class="linear-mobile-header">
+            <button class="linear-hamburger" id="btnHamburger">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <div class="mobile-logo-text">Calendar</div>
+        </div>
+
+        <aside class="linear-sidebar" id="sidebar">
+            <div class="linear-sidebar-top">
+                <div class="linear-logo">
+                    <div class="linear-logo-title">Compliance OS</div>
+                    <div class="linear-logo-sub">GIFT City IFSC</div>
+                </div>
+                <nav class="linear-nav">
+                    <a href="briefing.html" class="linear-nav-item">Briefing</a>
+                    <a href="dashboard.html" class="linear-nav-item">Feed</a>
+                    <a href="chat.html" class="linear-nav-item">AI Chat</a>
+                    <a href="calendar.html" class="linear-nav-item active">Calendar</a>
+                    <a href="audit.html" class="linear-nav-item">Audit Log</a>
+                </nav>
+            </div>
+            <button class="linear-btn-logout" id="btnLogout">Log out</button>
+        </aside>
+
+        <main class="linear-main calendar-main">
+            <div class="audit-scroll">
+                <header class="audit-hero">
+                    <div>
+                        <div class="audit-eyebrow">Filing schedule</div>
+                        <h1 class="brief-h1">Compliance Calendar</h1>
+                        <p class="audit-sub">Standard recurring obligations for an FME (Registered, Non-Retail). Mark complete with a regulator-issued reference number; evidence upload arrives in week 2.</p>
+                    </div>
+                    <div class="audit-actions">
+                        <button class="audit-btn" id="btnAddCustom" disabled title="Custom filings — week 2">+ Add filing</button>
+                    </div>
+                </header>
+
+                <section class="cal-tabs">
+                    <button class="audit-tab active" data-view="list">List</button>
+                    <button class="audit-tab" data-view="month">Month</button>
+                </section>
+
+                <section class="cal-pane" id="calList">
+                    <div class="cal-table">
+                        <div class="cal-row cal-row--head">
+                            <div>Filing</div>
+                            <div>Recurrence</div>
+                            <div>Reg ref</div>
+                            <div>Due</div>
+                            <div>Status</div>
+                            <div></div>
+                        </div>
+                        <div id="calBody"></div>
+                    </div>
+                </section>
+
+                <section class="cal-pane" id="calMonth" hidden>
+                    <div class="cal-month" id="calMonthGrid"></div>
+                </section>
+            </div>
+        </main>
+
+        <!-- Mark-complete drawer -->
+        <aside class="source-drawer audit-drawer" id="filingDrawer">
+            <div class="source-drawer-head">
+                <div class="source-drawer-title" id="filingTitle">Filing</div>
+                <button class="source-drawer-close" id="btnCloseFilingDrawer">×</button>
+            </div>
+            <div class="source-drawer-meta" id="filingMeta"></div>
+            <div class="source-drawer-body" id="filingBody"></div>
+        </aside>
+
+        <div class="toast-stack" id="toastStack"></div>
+    </div>
+
+    <script>
+        const CONFIG = {
+            API_BASE: (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                ? 'http://localhost:8000'
+                : 'https://giftcity-compliance-api.onrender.com',
+        };
+
+        // ── 5 hardcoded IFSCA recurring filings (MVP) ─────────
+        // Real recurrence engine + per-instance generation arrives in week 2.
+        const TODAY = new Date();
+        function daysFromNow(n) { const d = new Date(TODAY); d.setDate(d.getDate() + n); return d; }
+        function fmt(d) { return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }); }
+
+        const STORAGE_KEY = 'compliance_os_filings_state_v1';
+        function loadState() {
+            try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch { return {}; }
+        }
+        function saveState(s) { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
+        let state = loadState();
+
+        const FILINGS = [
+            {
+                id: 'ifsca-quarterly-compliance',
+                name: 'Quarterly Compliance Report',
+                recurrence: 'Quarterly',
+                reg_ref: 'IFSCA (FME) Reg., 2022',
+                due: daysFromNow(3),
+                description: 'Report covering all material compliance events for the quarter, signed off by the Compliance Officer.',
+            },
+            {
+                id: 'ifsca-aml-risk',
+                name: 'AML Risk Assessment',
+                recurrence: 'Annual',
+                reg_ref: 'IFSCA AML/CFT Guidelines',
+                due: daysFromNow(22),
+                description: 'Annual entity-level money-laundering and terrorism-financing risk assessment with documented mitigants.',
+            },
+            {
+                id: 'ifsca-fatca-crs',
+                name: 'FATCA-CRS Submission',
+                recurrence: 'Annual',
+                reg_ref: 'CBDT / IFSCA (Reporting) Reg.',
+                due: daysFromNow(14),
+                description: 'Annual FATCA & CRS reporting in the prescribed schema; submitted via the IFSCA reporting portal.',
+            },
+            {
+                id: 'ifsca-net-worth',
+                name: 'Net Worth Certificate',
+                recurrence: 'Annual',
+                reg_ref: 'IFSCA (FME) Reg., 2022',
+                due: daysFromNow(45),
+                description: 'CA-certified net worth showing continued compliance with the minimum capital requirement for the FME licence.',
+            },
+            {
+                id: 'ifsca-annual-compliance',
+                name: 'Annual Compliance Certificate',
+                recurrence: 'Annual',
+                reg_ref: 'IFSCA (FME) Reg., 2022',
+                due: daysFromNow(60),
+                description: 'Year-end attestation of compliance with applicable IFSCA obligations, signed by the Principal Officer.',
+            },
+        ];
+
+        function escapeHtml(t) { if (!t) return ''; const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+        function statusFor(filing) {
+            const persisted = state[filing.id];
+            if (persisted?.status === 'submitted') return { label: 'Submitted', cls: 'cal-st-ok' };
+            const now = new Date();
+            const diffDays = Math.ceil((filing.due - now) / 86400000);
+            if (diffDays < 0) return { label: 'Overdue', cls: 'cal-st-bad' };
+            if (diffDays <= 7) return { label: `T-${diffDays}`, cls: 'cal-st-warn' };
+            return { label: `T-${diffDays}`, cls: 'cal-st-info' };
+        }
+
+        function showToast(msg, kind = 'info') {
+            const stack = document.getElementById('toastStack');
+            const el = document.createElement('div');
+            el.className = `toast toast--${kind}`;
+            el.textContent = msg;
+            stack.appendChild(el);
+            setTimeout(() => el.classList.add('visible'), 10);
+            setTimeout(() => el.classList.remove('visible'), 3500);
+            setTimeout(() => el.remove(), 4000);
+        }
+
+        function renderList() {
+            const body = document.getElementById('calBody');
+            body.innerHTML = FILINGS.map(f => {
+                const st = statusFor(f);
+                const persisted = state[f.id] || {};
+                return `
+                    <button class="cal-row" data-id="${f.id}">
+                        <div class="cal-cell-name">
+                            <div>${escapeHtml(f.name)}</div>
+                            <div class="cal-row-sub">${escapeHtml(f.description)}</div>
+                        </div>
+                        <div class="cal-cell-meta">${escapeHtml(f.recurrence)}</div>
+                        <div class="cal-cell-meta mono">${escapeHtml(f.reg_ref)}</div>
+                        <div class="cal-cell-meta">${fmt(f.due)}</div>
+                        <div><span class="cal-status ${st.cls}">${st.label}</span></div>
+                        <div class="cal-cell-meta">${persisted.regulator_ref ? `<span class="mono">${escapeHtml(persisted.regulator_ref)}</span>` : '—'}</div>
+                    </button>`;
+            }).join('');
+
+            body.querySelectorAll('.cal-row').forEach(r => {
+                r.addEventListener('click', () => openFilingDrawer(r.dataset.id));
+            });
+        }
+
+        function renderMonth() {
+            const grid = document.getElementById('calMonthGrid');
+            const now = new Date();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            const startOfGrid = new Date(startOfMonth);
+            startOfGrid.setDate(startOfGrid.getDate() - startOfGrid.getDay());  // start on Sunday
+
+            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+            const cells = [];
+            for (let i = 0; i < 42; i++) {
+                const d = new Date(startOfGrid);
+                d.setDate(d.getDate() + i);
+                if (i >= 35 && d > endOfMonth) break;
+                cells.push(d);
+            }
+
+            const filingsByDate = {};
+            FILINGS.forEach(f => {
+                const k = f.due.toISOString().slice(0, 10);
+                (filingsByDate[k] = filingsByDate[k] || []).push(f);
+            });
+
+            const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const headerHtml = dayHeaders.map(d => `<div class="cal-month-head">${d}</div>`).join('');
+            const cellsHtml = cells.map(d => {
+                const inMonth = d.getMonth() === now.getMonth();
+                const isToday = d.toDateString() === now.toDateString();
+                const k = d.toISOString().slice(0, 10);
+                const fl = filingsByDate[k] || [];
+                return `
+                    <div class="cal-month-cell ${inMonth ? '' : 'cal-month-cell--out'} ${isToday ? 'cal-month-cell--today' : ''}">
+                        <div class="cal-month-day">${d.getDate()}</div>
+                        ${fl.map(f => {
+                            const st = statusFor(f);
+                            return `<div class="cal-month-pill ${st.cls}" title="${escapeHtml(f.name)}">${escapeHtml(f.name.slice(0, 18))}</div>`;
+                        }).join('')}
+                    </div>`;
+            }).join('');
+
+            grid.innerHTML = headerHtml + cellsHtml;
+        }
+
+        function openFilingDrawer(id) {
+            const f = FILINGS.find(x => x.id === id);
+            if (!f) return;
+            const persisted = state[id] || {};
+            const st = statusFor(f);
+
+            document.getElementById('filingTitle').textContent = f.name;
+            document.getElementById('filingMeta').innerHTML = `
+                <div class="source-meta-row"><span class="lbl">Recurrence</span><span class="val">${escapeHtml(f.recurrence)}</span></div>
+                <div class="source-meta-row"><span class="lbl">Regulation</span><span class="val mono">${escapeHtml(f.reg_ref)}</span></div>
+                <div class="source-meta-row"><span class="lbl">Due</span><span class="val">${fmt(f.due)} <span class="cal-status ${st.cls}" style="margin-left:8px;">${st.label}</span></span></div>
+            `;
+            document.getElementById('filingBody').innerHTML = `
+                <p class="audit-q">${escapeHtml(f.description)}</p>
+                <div class="filing-form">
+                    <label>Submission date
+                        <input type="date" id="fSubmittedDate" value="${persisted.submitted_at || ''}">
+                    </label>
+                    <label>Regulator-issued reference number
+                        <input type="text" id="fRegRef" placeholder="e.g. IFSCA/2026/QCR/1284" value="${escapeHtml(persisted.regulator_ref || '')}">
+                    </label>
+                    <label>Comments
+                        <textarea id="fComments" rows="2" placeholder="Optional notes">${escapeHtml(persisted.comments || '')}</textarea>
+                    </label>
+                    <div class="filing-actions">
+                        ${persisted.status === 'submitted'
+                            ? `<button class="audit-btn audit-btn--danger" id="btnReopenFiling">Reopen</button>`
+                            : `<button class="audit-btn audit-btn--primary" id="btnMarkComplete">Mark complete</button>`
+                        }
+                    </div>
+                </div>
+            `;
+            document.getElementById('filingDrawer').classList.add('open');
+
+            const btnComplete = document.getElementById('btnMarkComplete');
+            if (btnComplete) {
+                btnComplete.addEventListener('click', async () => {
+                    const submitted_at = document.getElementById('fSubmittedDate').value;
+                    const regulator_ref = document.getElementById('fRegRef').value.trim();
+                    const comments = document.getElementById('fComments').value.trim();
+                    if (!submitted_at) { showToast('Submission date is required.', 'error'); return; }
+                    if (!regulator_ref) { showToast('Regulator reference number is required.', 'error'); return; }
+
+                    state[id] = { status: 'submitted', submitted_at, regulator_ref, comments };
+                    saveState(state);
+                    showToast(`${f.name} marked complete.`, 'success');
+                    document.getElementById('filingDrawer').classList.remove('open');
+                    renderList();
+                });
+            }
+
+            const btnReopen = document.getElementById('btnReopenFiling');
+            if (btnReopen) {
+                btnReopen.addEventListener('click', () => {
+                    delete state[id]; saveState(state);
+                    showToast(`${f.name} reopened.`, 'info');
+                    document.getElementById('filingDrawer').classList.remove('open');
+                    renderList();
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('btnLogout').addEventListener('click', async () => {
+                await window.supabaseInstance.auth.signOut();
+                window.location.replace('auth.html');
+            });
+
+            const btnHamburger = document.getElementById('btnHamburger');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            if (btnHamburger) {
+                btnHamburger.addEventListener('click', () => { sidebar.classList.add('mobile-open'); sidebarOverlay.classList.add('active'); });
+                sidebarOverlay.addEventListener('click', () => { sidebar.classList.remove('mobile-open'); sidebarOverlay.classList.remove('active'); });
+            }
+
+            document.getElementById('btnCloseFilingDrawer').addEventListener('click', () => {
+                document.getElementById('filingDrawer').classList.remove('open');
+            });
+
+            document.querySelectorAll('.cal-tabs .audit-tab').forEach(t => {
+                t.addEventListener('click', () => {
+                    document.querySelectorAll('.cal-tabs .audit-tab').forEach(x => x.classList.remove('active'));
+                    t.classList.add('active');
+                    const v = t.dataset.view;
+                    document.getElementById('calList').hidden = v !== 'list';
+                    document.getElementById('calMonth').hidden = v !== 'month';
+                    if (v === 'month') renderMonth();
+                });
+            });
+
+            renderList();
+        });
+    </script>
+</body>
+</html>

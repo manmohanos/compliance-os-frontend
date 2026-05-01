@@ -3,26 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="AI-powered regulatory compliance intelligence for GIFT City IFSC entities">
-    <title>Compliance AI — Ask anything about IFSCA, SEBI, RBI regulations</title>
-    <!-- Fonts -->
+    <meta name="description" content="Citation-backed compliance answers for IFSCA-regulated entities">
+    <title>Compliance AI — Citation-backed answers</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Inter:wght@300..600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    
-    <!-- ── Supabase & Parsers ────────────────────────────── -->
+
+    <!-- ── Supabase + markdown ─────────────────────────────── -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
-        // ── Credentials — single source of truth is app.js CONFIG.
-        // This block mirrors those values for the blocking auth guard
-        // which must run before app.js is loaded.
         const CHAT_CONFIG = {
             SUPABASE_URL: 'https://eitutowmqiqxdpbeokcv.supabase.co',
             SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpdHV0b3dtcWlxeGRwYmVva2N2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0MjEyNTUsImV4cCI6MjA5MTk5NzI1NX0.EDvtrRUJGDZavcpSIXpR9Bc5ZXxHnCsD3SUqtJv-D2M',
         };
-
         const cookieStorage = {
             getItem: (key) => {
                 const name = key + '=';
@@ -42,13 +38,11 @@
                 document.cookie = key + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
             },
         };
-
         const { createClient } = supabase;
         const supabaseClient = createClient(CHAT_CONFIG.SUPABASE_URL, CHAT_CONFIG.SUPABASE_ANON_KEY, {
             auth: { storage: cookieStorage, autoRefreshToken: true, persistSession: true, detectSessionInUrl: false },
         });
         window.supabaseInstance = supabaseClient;
-
         (async function checkAuth() {
             try {
                 const { data: { session } } = await supabaseClient.auth.getSession();
@@ -56,6 +50,7 @@
                     window.location.replace('auth.html');
                 } else {
                     window.USER_EMAIL = session.user.email;
+                    window.USER_ID = session.user.id;
                     window.USER_TOKEN = session.access_token;
                 }
             } catch (err) {
@@ -67,10 +62,8 @@
 </head>
 <body class="linear-body">
     <div id="app" class="linear-layout">
-        <!-- Mobile Overlay -->
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-        <!-- Mobile Header (hamburger) -->
         <div class="linear-mobile-header">
             <button class="linear-hamburger" id="btnHamburger">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
@@ -79,7 +72,6 @@
             <div class="mobile-header-spacer"></div>
         </div>
 
-        <!-- Sidebar -->
         <aside class="linear-sidebar" id="sidebar">
             <div class="linear-sidebar-top">
                 <div class="linear-logo">
@@ -88,12 +80,11 @@
                 </div>
 
                 <nav class="linear-nav">
-                    <a href="dashboard.html" class="linear-nav-item">
-                        Dashboard
-                    </a>
-                    <a href="chat.html" class="linear-nav-item active">
-                        AI Chat
-                    </a>
+                    <a href="briefing.html" class="linear-nav-item">Briefing</a>
+                    <a href="dashboard.html" class="linear-nav-item">Feed</a>
+                    <a href="chat.html" class="linear-nav-item active">AI Chat</a>
+                    <a href="calendar.html" class="linear-nav-item">Calendar</a>
+                    <a href="audit.html" class="linear-nav-item">Audit Log</a>
                 </nav>
 
                 <div class="linear-history">
@@ -101,60 +92,72 @@
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         New Chat
                     </button>
-                    
-                    <div class="linear-history-label">Today</div>
-                    <div class="linear-history-item active">Category III AIF Leverage...</div>
-                    
-                    <div class="linear-history-label">Previous 7 Days</div>
-                    <div class="linear-history-item">Recent SEBI KYC Regulation...</div>
-                    <div class="linear-history-item">Tax structures in GIFT...</div>
+
+                    <div class="linear-history-label">Recent</div>
+                    <div id="recentChatsList" class="linear-recent-list">
+                        <div class="linear-recent-empty">No saved Q&amp;A yet.</div>
+                    </div>
                 </div>
             </div>
 
             <button class="linear-btn-logout" id="btnLogout">Log out</button>
         </aside>
 
-        <!-- Main Chat Area -->
         <main class="linear-main">
-            <!-- Scroll area -->
             <div class="linear-feed" id="mainChatFeed">
-                <!-- Welcome Screen -->
                 <div class="linear-welcome" id="welcomeScreen">
                     <h1 class="linear-welcome-title">Compliance AI</h1>
-                    <p class="linear-welcome-sub">Trained on IFSCA, SEBI, and RBI regulatory frameworks</p>
+                    <p class="linear-welcome-sub">Citation-backed answers from IFSCA, SEBI &amp; RBI circulars. Every factual claim shows its source.</p>
                     <div class="linear-welcome-grid">
-                        <button class="linear-card" onclick="submitChat('Capital requirements for GIFT City AIFs')">Capital requirements for GIFT City AIFs</button>
-                        <button class="linear-card" onclick="submitChat('KYC/AML obligations for IBUs')">KYC/AML obligations for IBUs</button>
-                        <button class="linear-card" onclick="submitChat('SEBI LODR compliance checklist')">SEBI LODR compliance checklist</button>
-                        <button class="linear-card" onclick="submitChat('RBI ECB framework under IFSC')">RBI ECB framework under IFSC</button>
+                        <button class="linear-card" onclick="submitChat('What is the leverage cap for a Cat III AIF under IFSCA?')">What is the leverage cap for a Cat III AIF under IFSCA?</button>
+                        <button class="linear-card" onclick="submitChat('Quarterly compliance reporting deadlines for FMEs')">Quarterly compliance reporting deadlines for FMEs</button>
+                        <button class="linear-card" onclick="submitChat('AML/CFT obligations for an International Banking Unit')">AML/CFT obligations for an International Banking Unit</button>
+                        <button class="linear-card" onclick="submitChat('KYC documentation retention requirements under IFSCA')">KYC documentation retention requirements under IFSCA</button>
                     </div>
                 </div>
             </div>
 
-            <!-- Input Area Fixed Bottom -->
             <div class="linear-input-wrapper">
                 <div class="linear-input-box">
-                    <textarea id="fullChatInput" placeholder="Message Compliance AI..." rows="1"></textarea>
+                    <textarea id="fullChatInput" placeholder="Ask about IFSCA, SEBI, or RBI obligations..." rows="1"></textarea>
                     <button class="linear-send-btn" id="btnFullAskAI" disabled>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
                     </button>
                 </div>
-                <div class="linear-disclaimer">
-                    Compliance AI can make mistakes. Verify critical information with official sources.
+                <div class="linear-disclaimer" id="chatDisclaimer">
+                    Compliance AI cites every claim. Verify high-stakes interpretations with your counsel.
                 </div>
             </div>
         </main>
+
+        <!-- Source drawer (slides in from right when citation clicked) -->
+        <aside class="source-drawer" id="sourceDrawer">
+            <div class="source-drawer-head">
+                <div class="source-drawer-title" id="sourceTitle">Source</div>
+                <button class="source-drawer-close" id="btnCloseDrawer" aria-label="Close">×</button>
+            </div>
+            <div class="source-drawer-meta" id="sourceMeta"></div>
+            <div class="source-drawer-body" id="sourceBody"></div>
+            <div class="source-drawer-footer" id="sourceFooter"></div>
+        </aside>
+
+        <!-- Toast container -->
+        <div class="toast-stack" id="toastStack"></div>
     </div>
 
     <script>
+        // ── Constants ─────────────────────────────────────────
         const CONFIG = {
-            API_BASE: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-                      ? 'http://localhost:8000' 
-                      : 'https://giftcity-compliance-api.onrender.com'
+            API_BASE: (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+                ? 'http://localhost:8000'
+                : 'https://giftcity-compliance-api.onrender.com',
         };
 
+        // ── State ─────────────────────────────────────────────
         let conversationHistory = [];
-        
+        let lastTurn = null;  // {question, answer, citations, used_sources, model_id, is_grounded}
+
+        // ── Utilities ─────────────────────────────────────────
         function escapeHtml(text) {
             if (!text) return '';
             const div = document.createElement('div');
@@ -162,27 +165,158 @@
             return div.innerHTML;
         }
 
-        document.getElementById('btnLogout').addEventListener('click', async () => {
-            await window.supabaseInstance.auth.signOut();
-            window.location.href = 'auth.html';
-        });
-
-        // Mobile sidebar toggle
-        const btnHamburger = document.getElementById('btnHamburger');
-        const sidebar = document.getElementById('sidebar');
-        const sidebarOverlay = document.getElementById('sidebarOverlay');
-
-        if(btnHamburger) {
-            btnHamburger.addEventListener('click', () => {
-                sidebar.classList.add('mobile-open');
-                sidebarOverlay.classList.add('active');
-            });
-            sidebarOverlay.addEventListener('click', () => {
-                sidebar.classList.remove('mobile-open');
-                sidebarOverlay.classList.remove('active');
-            });
+        function showToast(msg, kind = 'info') {
+            const stack = document.getElementById('toastStack');
+            const el = document.createElement('div');
+            el.className = `toast toast--${kind}`;
+            el.textContent = msg;
+            stack.appendChild(el);
+            setTimeout(() => { el.classList.add('visible'); }, 10);
+            setTimeout(() => { el.classList.remove('visible'); }, 3500);
+            setTimeout(() => { el.remove(); }, 4000);
         }
 
+        // ── Citation rendering ────────────────────────────────
+        // Replaces [§<circular_no>::<section_path>] with clickable chips.
+        function renderAnswerWithCitations(rawMarkdown, sources) {
+            const sourceMap = {};
+            (sources || []).forEach(s => {
+                if (s.circular_number) sourceMap[s.circular_number] = s;
+            });
+
+            // First parse markdown
+            let html = marked.parse(rawMarkdown || '');
+
+            // Then swap citation tags inside the rendered HTML.
+            html = html.replace(/\[§([^\]]+?)::([^\]]+?)\]/g, (full, circNo, section) => {
+                const meta = sourceMap[circNo];
+                const idx = (sources || []).findIndex(s => s.circular_number === circNo);
+                const label = idx >= 0 ? `${idx + 1}` : '?';
+                const safeNo = escapeHtml(circNo);
+                const safeSec = escapeHtml(section);
+                const dataPayload = encodeURIComponent(JSON.stringify({
+                    circular_number: circNo,
+                    section_path: section,
+                    title: meta?.title || '',
+                    source_url: meta?.source_url || '',
+                    pdf_url: meta?.pdf_url || '',
+                    parent_chunk_id: meta?.parent_chunk_id || '',
+                }));
+                return `<button class="cite-chip" data-payload="${dataPayload}" title="${safeNo} · ${safeSec}">[${label}]</button>`;
+            });
+
+            return html;
+        }
+
+        // ── Source drawer ─────────────────────────────────────
+        async function openSourceDrawer(payload) {
+            const drawer = document.getElementById('sourceDrawer');
+            const title = document.getElementById('sourceTitle');
+            const meta = document.getElementById('sourceMeta');
+            const body = document.getElementById('sourceBody');
+            const footer = document.getElementById('sourceFooter');
+
+            title.textContent = payload.circular_number || 'Source';
+            meta.innerHTML = `
+                <div class="source-meta-row"><span class="lbl">Section</span><span class="val">${escapeHtml(payload.section_path || 'Document')}</span></div>
+                ${payload.title ? `<div class="source-meta-row"><span class="lbl">Title</span><span class="val">${escapeHtml(payload.title)}</span></div>` : ''}
+            `;
+
+            body.innerHTML = `<div class="source-loading">Loading source paragraph…</div>`;
+            footer.innerHTML = '';
+            drawer.classList.add('open');
+
+            // Try to fetch parent chunk text via /api/circulars/{circular_id}? — for MVP we
+            // just show the metadata + link to the source URL. Citation drill-into-text
+            // requires a parent-text fetch endpoint (week-2 enhancement).
+            body.innerHTML = `
+                <div class="source-quote">
+                    <p>The cited paragraph is rendered from the parent chunk that produced this answer.</p>
+                    <p class="source-quote-meta">In the MVP, full inline paragraph fetch is via the original PDF — click below to open it.</p>
+                </div>
+            `;
+
+            const links = [];
+            if (payload.source_url) {
+                links.push(`<a class="source-link" href="${escapeHtml(payload.source_url)}" target="_blank" rel="noopener">Open source URL ↗</a>`);
+            }
+            if (payload.pdf_url) {
+                links.push(`<a class="source-link" href="${escapeHtml(payload.pdf_url)}" target="_blank" rel="noopener">Open PDF ↗</a>`);
+            }
+            footer.innerHTML = links.join('');
+        }
+
+        function closeSourceDrawer() {
+            document.getElementById('sourceDrawer').classList.remove('open');
+        }
+
+        // ── Save Q&A ──────────────────────────────────────────
+        async function saveLastTurnToAudit() {
+            if (!lastTurn) {
+                showToast('Nothing to save yet.', 'warn');
+                return;
+            }
+            try {
+                const res = await fetch(`${CONFIG.API_BASE}/api/audit/save`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: window.USER_ID,
+                        title: (lastTurn.question || '').slice(0, 80),
+                        purpose: 'internal',
+                        payload: {
+                            question: lastTurn.question,
+                            answer: lastTurn.answer,
+                            citations: lastTurn.citations,
+                            used_sources: lastTurn.used_sources,
+                            model_id: lastTurn.model_id,
+                            is_grounded: lastTurn.is_grounded,
+                            saved_at: new Date().toISOString(),
+                        },
+                    }),
+                });
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}));
+                    throw new Error(err.detail || `HTTP ${res.status}`);
+                }
+                showToast('Saved to audit log.', 'success');
+                loadRecentSaved();
+            } catch (err) {
+                showToast(`Save failed: ${err.message}`, 'error');
+            }
+        }
+
+        // ── Recent saved chats sidebar ────────────────────────
+        async function loadRecentSaved() {
+            const list = document.getElementById('recentChatsList');
+            if (!window.USER_ID) return;
+            try {
+                const res = await fetch(`${CONFIG.API_BASE}/api/audit/list?user_id=${encodeURIComponent(window.USER_ID)}&limit=8`);
+                if (!res.ok) {
+                    list.innerHTML = '<div class="linear-recent-empty">Audit log unavailable.</div>';
+                    return;
+                }
+                const data = await res.json();
+                const items = data.items || [];
+                if (!items.length) {
+                    list.innerHTML = '<div class="linear-recent-empty">No saved Q&amp;A yet.</div>';
+                    return;
+                }
+                list.innerHTML = items.map(item => {
+                    const title = (item.title || 'Untitled').slice(0, 60);
+                    return `<button class="linear-recent-item" onclick="loadSavedTurn('${item.id}')">${escapeHtml(title)}</button>`;
+                }).join('');
+            } catch {
+                list.innerHTML = '<div class="linear-recent-empty">Audit log unavailable.</div>';
+            }
+        }
+
+        async function loadSavedTurn(id) {
+            // For MVP, just navigate to audit page
+            window.location.href = `audit.html?artifact=${id}`;
+        }
+
+        // ── Chat submission ───────────────────────────────────
         const input = document.getElementById('fullChatInput');
         const btnAsk = document.getElementById('btnFullAskAI');
         const feedContainer = document.getElementById('mainChatFeed');
@@ -205,16 +339,11 @@
             input.disabled = true;
             btnAsk.disabled = true;
 
-            // Render User Message directly
             feedContainer.insertAdjacentHTML('beforeend', `
                 <div class="linear-msg user fade-in-up">
-                    <div class="linear-msg-bubble">
-                        ${escapeHtml(question).replace(/\\n/g, '<br>')}
-                    </div>
+                    <div class="linear-msg-bubble">${escapeHtml(question).replace(/\n/g, '<br>')}</div>
                 </div>
             `);
-
-            // Scroll to bottom properly for flex-end approach or standard layout
             feedContainer.scrollTop = feedContainer.scrollHeight;
 
             const loaderId = 'loader-' + Date.now();
@@ -229,46 +358,116 @@
             feedContainer.scrollTop = feedContainer.scrollHeight;
 
             try {
-                const reqBody = { message: question, conversationHistory: conversationHistory };
+                const reqBody = {
+                    message: question,
+                    conversation_history: conversationHistory,
+                    user_id: window.USER_ID,
+                };
 
                 const res = await fetch(`${CONFIG.API_BASE}/api/chat`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(reqBody)
+                    body: JSON.stringify(reqBody),
                 });
 
                 if (!res.ok) {
                     const errData = await res.json().catch(() => ({}));
-                    throw new Error(errData.detail || "API error");
+                    throw new Error(errData.detail || 'API error');
                 }
-                const resData = await res.json();
+                const data = await res.json();
 
                 conversationHistory.push(
-                    { role: "user", content: question },
-                    { role: "assistant", content: resData.answer }
+                    { role: 'user', content: question },
+                    { role: 'assistant', content: data.answer || '' },
                 );
+
+                lastTurn = {
+                    question,
+                    answer: data.answer,
+                    citations: data.citations || [],
+                    used_sources: data.used_sources || [],
+                    model_id: data.model_id,
+                    is_grounded: data.is_grounded,
+                };
+
+                const renderedHtml = renderAnswerWithCitations(data.answer, data.used_sources);
+                const sources = data.used_sources || [];
+
+                const groundedBadge = data.is_grounded
+                    ? `<span class="grounded-badge grounded-badge--on">Grounded · ${sources.length} source${sources.length === 1 ? '' : 's'}</span>`
+                    : `<span class="grounded-badge grounded-badge--off">Ungrounded — retrieval offline</span>`;
+
+                const refusalBadge = data.is_refusal
+                    ? `<span class="grounded-badge grounded-badge--warn">Refusal</span>`
+                    : '';
+
+                const sourcesBlock = sources.length
+                    ? `<div class="src-list">${sources.map((s, i) => `
+                        <button class="src-row" data-src='${encodeURIComponent(JSON.stringify(s))}'>
+                            <span class="src-row-idx">${i + 1}</span>
+                            <span class="src-row-no">${escapeHtml(s.circular_number || 'N/A')}</span>
+                            <span class="src-row-sec">${escapeHtml((s.section_path || []).join(' > ') || 'Document')}</span>
+                        </button>`).join('')}</div>`
+                    : '';
+
+                const actionRow = data.is_refusal ? '' : `
+                    <div class="ai-actions">
+                        <button class="ai-action-btn" onclick="saveLastTurnToAudit()">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                            Save to audit
+                        </button>
+                        <button class="ai-action-btn" onclick="navigator.clipboard.writeText(lastTurn.answer); showToast('Copied.', 'success');">
+                            Copy
+                        </button>
+                        <span class="ai-action-meta">${escapeHtml(data.model_id || '')} · ${data.latency_ms || '?'}ms</span>
+                    </div>
+                `;
 
                 const loader = document.getElementById(loaderId);
                 if (loader) {
-                    const parsedMarkdown = marked.parse(resData.answer);
                     loader.innerHTML = `
                         <div class="linear-ai-avatar">C</div>
-                        <div class="linear-msg-text markdown-render">
-                            ${parsedMarkdown}
+                        <div class="linear-msg-text">
+                            <div class="ai-meta-line">${groundedBadge} ${refusalBadge}</div>
+                            <div class="markdown-render">${renderedHtml}</div>
+                            ${sourcesBlock}
+                            ${actionRow}
                         </div>
                     `;
+                    // Wire citation chips
+                    loader.querySelectorAll('.cite-chip').forEach(b => {
+                        b.addEventListener('click', () => {
+                            try {
+                                const p = JSON.parse(decodeURIComponent(b.dataset.payload));
+                                openSourceDrawer(p);
+                            } catch (e) { console.warn(e); }
+                        });
+                    });
+                    // Wire source rows
+                    loader.querySelectorAll('.src-row').forEach(r => {
+                        r.addEventListener('click', () => {
+                            try {
+                                const s = JSON.parse(decodeURIComponent(r.dataset.src));
+                                openSourceDrawer({
+                                    circular_number: s.circular_number,
+                                    section_path: (s.section_path || []).join(' > ') || s.cited_section_path || 'Document',
+                                    title: s.title,
+                                    source_url: s.source_url,
+                                    pdf_url: s.pdf_url,
+                                });
+                            } catch (e) { console.warn(e); }
+                        });
+                    });
                 }
             } catch (err) {
                 const loader = document.getElementById(loaderId);
-                const actualError = (err.message && err.message !== "API error") 
-                                     ? "Error: " + err.message 
-                                     : "AI is temporarily unavailable. Please try again later.";
+                const actualError = (err.message && err.message !== 'API error')
+                    ? 'Error: ' + err.message
+                    : 'AI is temporarily unavailable. Please try again.';
                 if (loader) {
                     loader.innerHTML = `
                         <div class="linear-ai-avatar" style="background:#ef4444;">!</div>
-                        <div class="linear-msg-text markdown-render" style="color:#ef4444; margin-top: 3px;">
-                            ${escapeHtml(actualError)}
-                        </div>
+                        <div class="linear-msg-text" style="color:#ef4444;">${escapeHtml(actualError)}</div>
                     `;
                 }
             } finally {
@@ -279,19 +478,44 @@
             }
         };
 
+        // ── Sidebar/UX wiring ─────────────────────────────────
+        document.getElementById('btnLogout').addEventListener('click', async () => {
+            await window.supabaseInstance.auth.signOut();
+            window.location.href = 'auth.html';
+        });
+
+        const btnHamburger = document.getElementById('btnHamburger');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        if (btnHamburger) {
+            btnHamburger.addEventListener('click', () => {
+                sidebar.classList.add('mobile-open');
+                sidebarOverlay.classList.add('active');
+            });
+            sidebarOverlay.addEventListener('click', () => {
+                sidebar.classList.remove('mobile-open');
+                sidebarOverlay.classList.remove('active');
+            });
+        }
+
         btnNewChat.addEventListener('click', () => {
             conversationHistory = [];
+            lastTurn = null;
             feedContainer.innerHTML = '';
             const welcome = document.getElementById('welcomeScreen');
             if (welcome) {
                 welcome.style.display = 'flex';
                 feedContainer.appendChild(welcome);
+            } else {
+                window.location.reload();
             }
             if (sidebar.classList.contains('mobile-open')) {
                 sidebar.classList.remove('mobile-open');
                 sidebarOverlay.classList.remove('active');
             }
         });
+
+        document.getElementById('btnCloseDrawer').addEventListener('click', closeSourceDrawer);
 
         btnAsk.addEventListener('click', () => submitChat(input.value));
         input.addEventListener('input', handleInputResize);
@@ -301,6 +525,14 @@
                 submitChat(input.value);
             }
         });
+
+        // Keyboard: Esc closes drawer
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeSourceDrawer();
+        });
+
+        // Initial sidebar load
+        setTimeout(loadRecentSaved, 500);
     </script>
 </body>
 </html>
