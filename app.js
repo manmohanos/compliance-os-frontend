@@ -128,7 +128,8 @@ function renderStats() {
     document.getElementById('statTotal').textContent = s.total_circulars ?? '--';
     document.getElementById('statCritical').textContent = s.severity_breakdown?.critical ?? '--';
     document.getElementById('statModerate').textContent = s.severity_breakdown?.moderate ?? '--';
-    document.getElementById('statRecent').textContent = s.recent_7_days ?? '--';
+    // Prefer 30-day window (label is "Last 30 Days"); fall back to 7-day for older API
+    document.getElementById('statRecent').textContent = s.recent_30_days ?? s.recent_7_days ?? '--';
 }
 
 function renderTable() {
@@ -210,7 +211,8 @@ function renderUrgentBanner() {
     
     if (count > 0) {
         banner.className = 'urgent-banner';
-        banner.innerHTML = `<span>⚠ ${count} critical circular${count>1?'s':''} require your attention this week</span> <span>Filter &rarr;</span>`;
+        const noun = count === 1 ? 'circular requires' : 'circulars require';
+        banner.innerHTML = `<span>⚠ ${count} critical ${noun} your attention this week</span> <span>Filter &rarr;</span>`;
     } else {
         banner.className = 'urgent-banner clear-active';
         banner.innerHTML = `<span>✓ You are up to date. No critical items pending.</span>`;
