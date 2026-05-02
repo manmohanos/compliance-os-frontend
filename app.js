@@ -174,13 +174,20 @@ function renderTable() {
         const isActive = state.activeId === item.id;
         const rowClasses = `circular-row ${!isRead ? 'unread' : ''} ${isActive ? 'active' : ''}`.trim();
 
+        const fullTitle = item.title || '';
+        const TRUNC = 85;
+        const titleDisplay = fullTitle.length > TRUNC
+            ? fullTitle.slice(0, TRUNC).replace(/\s+\S*$/, '') + '…'  // word-aware ellipsis
+            : fullTitle;
+        const titleAttr = escapeHtml(fullTitle);
+
         return `
-            <tr class="${rowClasses}" data-id="${item.id}" onclick="openDetail('${item.id}')">
+            <tr class="${rowClasses}" data-id="${item.id}" onclick="openDetail('${item.id}')" title="${titleAttr}">
                 <td>
                     <span class="severity-badge ${severity}">${severity.substring(0,3)}</span>
                 </td>
                 <td>
-                    <div class="circular-title">${escapeHtml(item.title)}</div>
+                    <div class="circular-title">${escapeHtml(titleDisplay)}</div>
                 </td>
                 <td>
                     <span class="circular-date">${formattedDate}</span>

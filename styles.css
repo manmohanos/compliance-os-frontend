@@ -490,6 +490,11 @@ h1, h2, h3 {
     color: var(--text-secondary);
     line-height: 1.4;
     transition: color var(--transition);
+    /* keep titles to a single line; full title appears in row title= attribute on hover */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
 }
 
 .circular-row.unread .circular-title {
