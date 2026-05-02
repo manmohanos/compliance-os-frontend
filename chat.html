@@ -226,24 +226,53 @@
             footer.innerHTML = '';
             drawer.classList.add('open');
 
-            // Try to fetch parent chunk text via /api/circulars/{circular_id}? — for MVP we
-            // just show the metadata + link to the source URL. Citation drill-into-text
-            // requires a parent-text fetch endpoint (week-2 enhancement).
-            body.innerHTML = `
-                <div class="source-quote">
-                    <p>The cited paragraph is rendered from the parent chunk that produced this answer.</p>
-                    <p class="source-quote-meta">In the MVP, full inline paragraph fetch is via the original PDF — click below to open it.</p>
-                </div>
-            `;
+            // Fetch the actual cited paragraph from the chunks endpoint
+            let bodyHtml = '';
+            if (payload.parent_chunk_id) {
+                try {
+                    const r = await fetch(`${CONFIG.API_BASE}/api/chunks/${encodeURIComponent(payload.parent_chunk_id)}`);
+                    if (r.ok) {
+                        const data = await r.json();
+                        const text = (data.parent && data.parent.text) || (data.chunk && data.chunk.text) || '';
+                        const sec = (data.chunk && (data.chunk.section_path || []).join(' > ')) || payload.section_path || 'Document';
+                        const cir = data.circular || {};
+                        // Update meta with richer info
+                        meta.innerHTML = `
+                            <div class="source-meta-row"><span class="lbl">Section</span><span class="val">${escapeHtml(sec)}</span></div>
+                            ${cir.title ? `<div class="source-meta-row"><span class="lbl">Title</span><span class="val">${escapeHtml(cir.title)}</span></div>` : ''}
+                            ${cir.published_date ? `<div class="source-meta-row"><span class="lbl">Published</span><span class="val">${escapeHtml(String(cir.published_date))}</span></div>` : ''}
+                            ${cir.document_type ? `<div class="source-meta-row"><span class="lbl">Type</span><span class="val">${escapeHtml(cir.document_type)}</span></div>` : ''}
+                        `;
+                        // Render the actual paragraph
+                        bodyHtml = `
+                            <div class="source-quote">
+                                <p style="white-space:pre-wrap;line-height:1.6;">${escapeHtml(text || '(empty paragraph)')}</p>
+                            </div>
+                        `;
+                        // Link footer
+                        const linksList = [];
+                        if (cir.source_url) linksList.push(`<a class="source-link" href="${escapeHtml(cir.source_url)}" target="_blank" rel="noopener">Open source URL ↗</a>`);
+                        if (cir.pdf_url) linksList.push(`<a class="source-link" href="${escapeHtml(cir.pdf_url)}" target="_blank" rel="noopener">Open PDF ↗</a>`);
+                        footer.innerHTML = linksList.join('');
+                    }
+                } catch (err) {
+                    console.warn('chunk fetch failed', err);
+                }
+            }
 
-            const links = [];
-            if (payload.source_url) {
-                links.push(`<a class="source-link" href="${escapeHtml(payload.source_url)}" target="_blank" rel="noopener">Open source URL ↗</a>`);
+            if (!bodyHtml) {
+                // Fallback (no parent_chunk_id or fetch failed) — show metadata-only view + open links
+                bodyHtml = `
+                    <div class="source-quote">
+                        <p>Source paragraph unavailable inline. Open the original document below.</p>
+                    </div>
+                `;
+                const linksList = [];
+                if (payload.source_url) linksList.push(`<a class="source-link" href="${escapeHtml(payload.source_url)}" target="_blank" rel="noopener">Open source URL ↗</a>`);
+                if (payload.pdf_url) linksList.push(`<a class="source-link" href="${escapeHtml(payload.pdf_url)}" target="_blank" rel="noopener">Open PDF ↗</a>`);
+                footer.innerHTML = linksList.join('');
             }
-            if (payload.pdf_url) {
-                links.push(`<a class="source-link" href="${escapeHtml(payload.pdf_url)}" target="_blank" rel="noopener">Open PDF ↗</a>`);
-            }
-            footer.innerHTML = links.join('');
+            body.innerHTML = bodyHtml;
         }
 
         function closeSourceDrawer() {
