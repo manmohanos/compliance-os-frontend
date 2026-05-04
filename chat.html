@@ -222,7 +222,14 @@
                 ${payload.title ? `<div class="source-meta-row"><span class="lbl">Title</span><span class="val">${escapeHtml(payload.title)}</span></div>` : ''}
             `;
 
-            body.innerHTML = `<div class="source-loading">Loading source paragraph…</div>`;
+            body.innerHTML = `
+                <div class="source-skeleton">
+                    <div class="skeleton-line" style="width:92%;"></div>
+                    <div class="skeleton-line" style="width:78%;"></div>
+                    <div class="skeleton-line" style="width:85%;"></div>
+                    <div class="skeleton-line" style="width:64%;"></div>
+                </div>
+            `;
             footer.innerHTML = '';
             drawer.classList.add('open');
 
@@ -417,26 +424,51 @@
                     used_sources: data.used_sources || [],
                     model_id: data.model_id,
                     is_grounded: data.is_grounded,
+                    response_hash: data.response_hash || null,
                 };
 
                 const renderedHtml = renderAnswerWithCitations(data.answer, data.used_sources);
                 const sources = data.used_sources || [];
 
-                const groundedBadge = data.is_grounded
-                    ? `<span class="grounded-badge grounded-badge--on">Grounded · ${sources.length} source${sources.length === 1 ? '' : 's'}</span>`
-                    : `<span class="grounded-badge grounded-badge--off">Ungrounded — retrieval offline</span>`;
-
-                const refusalBadge = data.is_refusal
-                    ? `<span class="grounded-badge grounded-badge--warn">Refusal</span>`
-                    : '';
+                // Refusal = TRUST SIGNAL, not error. Render green-shield instead of red-warn.
+                // Ungrounded (retrieval-offline) is a real error condition; that stays warn.
+                let primaryBadge;
+                if (data.is_refusal) {
+                    primaryBadge = `<span class="grounded-badge grounded-badge--refusal">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:4px;vertical-align:-2px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+                        No relevant source — refused to guess
+                    </span>`;
+                } else if (data.is_grounded) {
+                    primaryBadge = `<span class="grounded-badge grounded-badge--on">Grounded · ${sources.length} source${sources.length === 1 ? '' : 's'}</span>`;
+                } else {
+                    primaryBadge = `<span class="grounded-badge grounded-badge--off">Ungrounded — retrieval offline</span>`;
+                }
 
                 const sourcesBlock = sources.length
-                    ? `<div class="src-list">${sources.map((s, i) => `
-                        <button class="src-row" data-src='${encodeURIComponent(JSON.stringify(s))}'>
-                            <span class="src-row-idx">${i + 1}</span>
-                            <span class="src-row-no">${escapeHtml(s.circular_number || 'N/A')}</span>
-                            <span class="src-row-sec">${escapeHtml((s.section_path || []).join(' > ') || 'Document')}</span>
-                        </button>`).join('')}</div>`
+                    ? `<div class="src-list-wrap">
+                        <div class="src-list-header">Sources cited</div>
+                        <div class="src-list">${sources.map((s, i) => {
+                            const lineage = s.lineage;
+                            const lineageBadge = lineage
+                                ? `<span class="src-row-lineage" title="This source was added because it ${escapeHtml(lineage.relationship_type)} another circular cited above.">
+                                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:-1px;margin-right:3px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                                     Linked: ${escapeHtml(lineage.relationship_type)} (${Math.round((lineage.confidence || 0) * 100)}%)
+                                   </span>`
+                                : '';
+                            return `<button class="src-row" data-src='${encodeURIComponent(JSON.stringify(s))}'>
+                                <span class="src-row-idx">${i + 1}</span>
+                                <span class="src-row-main">
+                                    <span class="src-row-no">${escapeHtml(s.circular_number || 'N/A')}</span>
+                                    <span class="src-row-sec">${escapeHtml((s.section_path || []).join(' > ') || 'Document')}</span>
+                                </span>
+                                ${lineageBadge}
+                            </button>`;
+                        }).join('')}</div>
+                    </div>`
+                    : '';
+
+                const hashTag = data.response_hash
+                    ? `<span class="ai-action-hash" title="Audit anchor (SHA-256 of question+answer+citations). Use this to retrieve the exact response from the audit log.">hash ${escapeHtml(data.response_hash.slice(0, 8))}…</span>`
                     : '';
 
                 const actionRow = data.is_refusal ? '' : `
@@ -449,6 +481,7 @@
                             Copy
                         </button>
                         <span class="ai-action-meta">${escapeHtml(data.model_id || '')} · ${data.latency_ms || '?'}ms</span>
+                        ${hashTag}
                     </div>
                 `;
 
@@ -457,7 +490,7 @@
                     loader.innerHTML = `
                         <div class="linear-ai-avatar">C</div>
                         <div class="linear-msg-text">
-                            <div class="ai-meta-line">${groundedBadge} ${refusalBadge}</div>
+                            <div class="ai-meta-line">${primaryBadge}</div>
                             <div class="markdown-render">${renderedHtml}</div>
                             ${sourcesBlock}
                             ${actionRow}
